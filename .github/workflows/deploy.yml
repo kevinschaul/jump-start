@@ -43,8 +43,7 @@ jobs:
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
-          git fetch origin gh-pages
-          git checkout gh-pages
+          git fetch origin main
           git merge main --strategy-option=theirs --allow-unrelated-histories
       
       - name: Install dependencies
