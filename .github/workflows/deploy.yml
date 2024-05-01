@@ -27,7 +27,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        ref: gh-pages
+        width:
+          ref: gh-pages
 
       - name: Setup Node
         uses: actions/setup-node@v4
