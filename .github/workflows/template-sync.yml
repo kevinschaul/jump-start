@@ -1,0 +1,24 @@
+on:
+  # schedule:
+  # - cron:  "0 0 1 * *"
+  # manual trigger
+  workflow_dispatch:
+  
+jobs:
+  repo-sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+      - uses: kota65535/github-template-sync-action@v1
+        with:
+          template: kevinschaul/jump-start
+          template-branch: gh-pages
+          pr-base-branch: gh-pages
+          pr-title: Sync latest jump-start website
