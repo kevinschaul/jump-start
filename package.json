@@ -1,0 +1,27 @@
+{
+  "name": "jump-start-template",
+  "version": "0.0.0",
+  "description": "A shortcut to your favorite code",
+  "scripts": {
+    "gallery:clone": "git submodule update --init",
+    "gallery:update": "git submodule sync --recursive",
+    "gallery:install": "cd jump-start-gallery &&  npm install",
+    "gallery:link": "cd jump-start-gallery && ln -sf ../../ src/starters",
+    "gallery:dev": "cd jump-start-gallery && npm run dev",
+    "gallery:build": "cd jump-start-gallery && npm run build",
+    "update-readme": "cd jump-start-gallery && npm run update-readme-submodule -- ../"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kevinschaul/jump-start-template.git"
+  },
+  "keywords": [
+    "jump-start"
+  ],
+  "author": "Kevin Schaul",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kevinschaul/jump-start-template/issues"
+  },
+  "homepage": "https://github.com/kevinschaul/jump-start-template#readme"
+}
