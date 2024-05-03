@@ -18,12 +18,35 @@ in your project.
 
 ## Starters
 
-*This section of the readme will be rewritten automatically
-with documentation for your specific starters.*
+### react-d3
 
-See
-[kevinschaul/jump-start/](https://github.com/kevinschaul/jump-start/##Starters)
-for an example.
+#### Chart
+
+    npx degit kevinschaul/jump-start/react-d3/Chart components/elements/Chart
+
+An empty React component for writing a responsive D3 chart.
+
+* Adds size prop
+* Sets up margin convention
+
+Tags: `react`, `d3`, `chart`
+
+### r
+
+#### data-analysis
+
+    npx degit kevinschaul/jump-start/r/data-analysis analysis
+
+A Quarto/R template for data journalism projects
+
+### geo
+
+#### pmtiles-counties
+
+    npx degit kevinschaul/jump-start/geo/pmtiles-counties geo
+
+A demo Makefile for creating map tiles at the county level
+
 
 ## Adding a starter
 
