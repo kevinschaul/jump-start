@@ -1,20 +1,7 @@
-# jump-start-template
+# jump-start
 
-A shortcut to your favorite code.
-
-`jump-start` is a lightweight system to organize that code that
-you keep coming back to. It’s a structured GitHub repository
-and a web frontend.
-
-A **starter** is a directory of code that you like -- whether
-it’s a single script or an entire app. Each starter lives in a
-**group** directory. Organize similar code for easier
-navigation.
-
-When you want to use your favorite code, locate that starter
-either in this README.md or in your gallery website. Copy the
-command, and run it in your terminal. Your starter code is now
-in your project.
+A shortcut to my favorite code. Want your own? Check out
+[kevinschaul/jump-start-template](https://github.com/kevinschaul/jump-start-template).
 
 ## Starters
 
@@ -72,12 +59,6 @@ default. For example, if you know that your React components live in
 `components/elements/`, set the `defaultDir` to that. The jump-start command
 shown in the README.md and gallery will place the files into this directory.
   
-## How to use this template
-
-1. At [GitHub](https://github.com/kevinschaul/jump-start-template), click "Use this template" -> "Create a new repository"
-2. Give your repository a name. Might I suggest "jump-start"?
-3. On the `main` branch, add your favorite code!
-
 ## Running the gallery locally
 
 The jump-start gallery code lives in [a separate
