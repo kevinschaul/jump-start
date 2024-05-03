@@ -17,6 +17,14 @@ An empty React component for writing a responsive D3 chart.
 
 Tags: `react`, `d3`, `chart`
 
+### r
+
+#### data-analysis
+
+    npx degit kevinschaul/jump-start/r/data-analysis analysis
+
+A Quarto/R template for data journalism projects
+
 ### geo
 
 #### pmtiles-counties
