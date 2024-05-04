@@ -68,6 +68,7 @@ locally, using the starters in this repo as its data:
 
     npm run gallery:clone
     npm run gallery:install
+    npm run gallery:link
     npm run gallery:dev
 
 Open [localhost:3000](localhost:3000) in a browser.
