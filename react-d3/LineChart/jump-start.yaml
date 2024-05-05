@@ -1,0 +1,11 @@
+---
+description: |
+  An empty React component for writing a responsive D3 chart.
+
+  * Adds size prop
+  * Sets up margin convention
+tags:
+  - react
+  - d3
+  - chart
+defaultDir: components/elements/Chart

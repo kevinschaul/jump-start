@@ -7,7 +7,7 @@
     "gallery:update": "git submodule sync --recursive",
     "gallery:install": "cd jump-start-gallery &&  npm install",
     "gallery:link": "cd jump-start-gallery && ln -sf ../../ src/starters",
-    "gallery:dev": "cd jump-start-gallery && npm run dev",
+    "gallery:dev": "cd jump-start-gallery && npm run generate-preview-component-map-submodule -- ../ && npm run dev",
     "gallery:build": "cd jump-start-gallery && npm run build",
     "update-readme": "cd jump-start-gallery && npm run update-readme-submodule -- ../"
   },
@@ -23,5 +23,14 @@
   "bugs": {
     "url": "https://github.com/kevinschaul/jump-start-template/issues"
   },
-  "homepage": "https://github.com/kevinschaul/jump-start-template#readme"
+  "homepage": "https://github.com/kevinschaul/jump-start-template#readme",
+  "devDependencies": {
+    "d3-selection": "^3.0.0",
+    "react-sizeme": "^3.0.2"
+  },
+  "dependencies": {
+    "d3-array": "^3.2.4",
+    "d3-scale": "^4.0.2",
+    "d3-shape": "^3.2.0"
+  }
 }
