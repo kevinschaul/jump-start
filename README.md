@@ -5,6 +5,8 @@ A shortcut to my favorite code. Want your own? Check out
 
 ## Starters
 
+---
+
 ### react-d3
 
 #### LineChart
@@ -26,6 +28,8 @@ An empty React component for writing a responsive D3 chart.
 
 Tags: `react`, `d3`, `chart`
 
+---
+
 ### r
 
 #### data-analysis
@@ -33,6 +37,8 @@ Tags: `react`, `d3`, `chart`
     npx degit kevinschaul/jump-start/r/data-analysis analysis
 
 A Quarto/R template for data journalism projects
+
+---
 
 ### geo
 
