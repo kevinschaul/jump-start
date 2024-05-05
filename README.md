@@ -7,6 +7,17 @@ A shortcut to my favorite code. Want your own? Check out
 
 ### react-d3
 
+#### LineChart
+
+    npx degit kevinschaul/jump-start/react-d3/LineChart components/elements/Chart
+
+An empty React component for writing a responsive D3 chart.
+
+* Adds size prop
+* Sets up margin convention
+
+Tags: `react`, `d3`, `chart`
+
 #### Chart
 
     npx degit kevinschaul/jump-start/react-d3/Chart components/elements/Chart
