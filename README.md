@@ -9,12 +9,9 @@ A shortcut to my favorite code. Want your own? Check out
 
 #### LineChart
 
-    npx degit kevinschaul/jump-start/react-d3/LineChart components/elements/Chart
+    npx degit kevinschaul/jump-start/react-d3/LineChart components/elements/LineChart
 
-An empty React component for writing a responsive D3 chart.
-
-* Adds size prop
-* Sets up margin convention
+A React component for writing a responsive D3 line chart.
 
 Tags: `react`, `d3`, `chart`
 
