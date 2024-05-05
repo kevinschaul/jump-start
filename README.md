@@ -59,7 +59,7 @@ starter name (e.g. `BarChart`).
 
 Then, add your code, and edit the generated `jump-start.yaml` file to your liking.
 
-## `jump-start.yaml`
+### `jump-start.yaml`
 
 Each starter must contain this file, which defines a few items used by the
 gallery.
@@ -72,6 +72,15 @@ appears in the `## Starters` section of the README.md, and in the web gallery.
 default. For example, if you know that your React components live in
 `components/elements/`, set the `defaultDir` to that. The jump-start command
 shown in the README.md and gallery will place the files into this directory.
+
+### `Preview.js`
+
+Any starter with a `Preview.js` file will have that file included in the jump
+start gallery. This file must export a React component.
+
+If your starter is a React component with dependencies and you want to preview
+it in the gallery using `Preview.js`, you must install those dependencies in
+this repo's package.json file.
   
 ## Running the gallery locally
 
