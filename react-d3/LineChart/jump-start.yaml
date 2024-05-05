@@ -1,11 +1,8 @@
 ---
 description: |
-  An empty React component for writing a responsive D3 chart.
-
-  * Adds size prop
-  * Sets up margin convention
+  A React component for writing a responsive D3 line chart.
 tags:
   - react
   - d3
   - chart
-defaultDir: components/elements/Chart
+defaultDir: components/elements/LineChart
