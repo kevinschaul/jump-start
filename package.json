@@ -24,11 +24,5 @@
     "url": "https://github.com/kevinschaul/jump-start-template/issues"
   },
   "homepage": "https://github.com/kevinschaul/jump-start-template#readme",
-  "dependencies": {
-    "d3-array": "^3.2.4",
-    "d3-scale": "^4.0.2",
-    "d3-selection": "^3.0.0",
-    "d3-shape": "^3.2.0",
-    "react-sizeme": "^3.0.2"
-  }
+  "dependencies": {}
 }
