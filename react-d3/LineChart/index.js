@@ -13,7 +13,6 @@ const data = [
 ]
 
 const LineChart = (props) => {
-  const { size } = props;
   const { width, height, ref } = useResizeDetector();
 
   const margin = {
