@@ -1,8 +1,6 @@
-"use client";
-
 import LineChart from "./index.js";
 
-const Preview = () => {
+const App = () => {
   return <LineChart />;
 };
-export default Preview;
+export default App;

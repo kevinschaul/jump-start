@@ -6,3 +6,9 @@ tags:
   - d3
   - chart
 defaultDir: components/elements/LineChart
+mainFile: index.js
+preview:
+  template: react
+  dependencies:
+    react-resize-detector: "10"
+    d3: "5"

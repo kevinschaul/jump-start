@@ -2,4 +2,4 @@
 description: |
   A demo Makefile for creating map tiles at the county level
 defaultDir: geo
-
+mainFile: Makefile

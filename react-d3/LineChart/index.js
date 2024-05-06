@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { SizeMe } from "react-sizeme";
+import { useResizeDetector } from "react-resize-detector";
 import { select } from "d3-selection";
 import { extent } from "d3-array";
 import { scaleLinear } from "d3-scale";
@@ -14,6 +14,7 @@ const data = [
 
 const LineChart = (props) => {
   const { size } = props;
+  const { width, height, ref } = useResizeDetector();
 
   const margin = {
     top: 10,
@@ -22,10 +23,8 @@ const LineChart = (props) => {
     left: 10,
   };
 
-  const width = size.width - margin.left - margin.right;
-  const height = (width * 0.5) - margin.top - margin.bottom;
-
-  const ref = useRef();
+  const chartWidth = width - margin.left - margin.right;
+  const chartHeight = (chartWidth * 0.5) - margin.top - margin.bottom;
 
   useEffect(() => {
     const svg = select(ref.current).select("svg").html("");
@@ -36,11 +35,11 @@ const LineChart = (props) => {
 
     const x = scaleLinear()
       .domain(extent(data, d => d.year))
-      .range([0, width])
+      .range([0, chartWidth])
 
     const y = scaleLinear()
       .domain(extent(data, d => d.value))
-      .range([height, 0])
+      .range([chartHeight, 0])
 
     const l = line()
       .x(d => x(d.year))
@@ -60,15 +59,11 @@ const LineChart = (props) => {
     <div ref={ref}>
       <svg
         style={{ width: "100%" }}
-        width={width + margin.left + margin.right}
-        height={height + margin.top + margin.bottom}
+        width={chartWidth + margin.left + margin.right}
+        height={chartHeight + margin.top + margin.bottom}
       />
     </div>
   );
 };
 
-const SizedChart = (props) => {
-  return <SizeMe>{({ size }) => <LineChart size={size} />}</SizeMe>;
-};
-
-export { SizedChart as default };
+export { LineChart as default };

@@ -7,8 +7,8 @@
     "gallery:update": "git submodule sync --recursive",
     "gallery:install": "cd jump-start-gallery &&  npm install",
     "gallery:link": "cd jump-start-gallery && ln -sf ../../ src/starters",
-    "gallery:dev": "cd jump-start-gallery && npm run generate-preview-component-map-submodule -- ../ && npm run dev",
-    "gallery:build": "cd jump-start-gallery && npm run generate-preview-component-map-submodule -- ../ && npm run build",
+    "gallery:dev": "cd jump-start-gallery && npm run dev",
+    "gallery:build": "cd jump-start-gallery && npm run build",
     "update-readme": "cd jump-start-gallery && npm run update-readme-submodule -- ../"
   },
   "repository": {
