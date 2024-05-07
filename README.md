@@ -11,8 +11,11 @@ A shortcut to my favorite code. Want your own? Check out
 
 #### LineChart
 
-    npx degit kevinschaul/jump-start/react-d3/LineChart \
+
+```
+npx degit kevinschaul/jump-start/react-d3/LineChart \
   components/elements/LineChart
+```
 
 A React component for writing a responsive D3 line chart.
 
@@ -20,8 +23,11 @@ Tags: `react`, `d3`, `chart`
 
 #### Chart
 
-    npx degit kevinschaul/jump-start/react-d3/Chart \
+
+```
+npx degit kevinschaul/jump-start/react-d3/Chart \
   components/elements/Chart
+```
 
 An empty React component for writing a responsive D3 chart.
 
@@ -36,7 +42,10 @@ Tags: `react`, `d3`, `chart`
 
 #### data-analysis
 
-    npx degit kevinschaul/jump-start/r/data-analysis analysis
+
+```
+npx degit kevinschaul/jump-start/r/data-analysis analysis
+```
 
 A Quarto/R template for data journalism projects
 
@@ -46,7 +55,10 @@ A Quarto/R template for data journalism projects
 
 #### pmtiles-counties
 
-    npx degit kevinschaul/jump-start/geo/pmtiles-counties geo
+
+```
+npx degit kevinschaul/jump-start/geo/pmtiles-counties geo
+```
 
 A demo Makefile for creating map tiles at the county level
 
