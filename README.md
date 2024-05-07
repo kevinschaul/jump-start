@@ -64,6 +64,11 @@ Then, add your code, and edit the generated `jump-start.yaml` file to your likin
 Each starter must contain this file, which defines a few items used by the
 gallery.
 
+Some examples:
+
+- [kevinschaul react-d3/LineChart](https://github.com/kevinschaul/jump-start/blob/main/react-d3/LineChart/jump-start.yaml)
+- [kevinschaul r/data-analysis](https://github.com/kevinschaul/jump-start/blob/main/r/data-analysis/jump-start.yaml)
+
 **`description`**: Anything you want to write about this starter. It could be
 the code’s features, any additional installation instructions, whatever. This
 appears in the `## Starters` section of the README.md, and in the web gallery.
@@ -73,14 +78,23 @@ default. For example, if you know that your React components live in
 `components/elements/`, set the `defaultDir` to that. The jump-start command
 shown in the README.md and gallery will place the files into this directory.
 
-### `Preview.js`
+**`mainFile`** (optional): The file shown initially in the gallery's "Starter files
+section.
 
-Any starter with a `Preview.js` file will have that file included in the jump
-start gallery. This file must export a React component.
+**`preview`** (optional): Configuration that gets passed down to the gallery's
+"Preview" section. The previews render via
+[Sandpack](https://sandpack.codesandbox.io/docs/getting-started/usage), so this
+configuration mimics Sandpack's. Currently only supports React. Your starter
+must include the file `Preview.js`, which default exports a React component.
 
-If your starter is a React component with dependencies and you want to preview
-it in the gallery using `Preview.js`, you must install those dependencies in
-this repo's package.json file.
+**`preview.template`** (optional, e.g. "react"): The template used by Sandpack.
+I've only used "react" but others may work too.
+
+**`preview.dependencies`** (optional, e.g. `d3: "5"`): An object containing
+dependencies for Sandpack to use for the preview. Think of it as the
+`package.json` file for the preview. Anything your starter needs should be
+listed here.
+
   
 ## Running the gallery locally
 
