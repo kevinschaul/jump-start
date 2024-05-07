@@ -27,7 +27,7 @@ jobs:
     if: ${{ github.repository != 'kevinschaul/jump-start-template' }}
     env:
         JUMP_START_GITHUB_USERNAME: ${{ github.repository_owner }}
-        JUMP_START_GITHUB_REPO: ${{ github.even.repository.name }}
+        JUMP_START_GITHUB_REPO: ${{ github.event.repository.name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
