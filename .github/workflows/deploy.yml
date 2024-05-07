@@ -25,6 +25,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     if: ${{ github.repository != 'kevinschaul/jump-start-template' }}
+    env:
+        JUMP_START_GITHUB_USERNAME: ${{ github.repository_owner }}
+        JUMP_START_GITHUB_REPO: ${{ github.even.repository.name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,7 +43,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm install
           npm run gallery:clone
           npm run gallery:install
           npm run gallery:link
