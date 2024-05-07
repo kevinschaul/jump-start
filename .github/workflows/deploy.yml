@@ -58,7 +58,6 @@ jobs:
 
       - name: Build site
         run: npm run gallery:build
-
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
