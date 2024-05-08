@@ -26,9 +26,9 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.repository != 'kevinschaul/jump-start-template' }}
     env:
-        JUMP_START_GITHUB_USERNAME: ${{ github.repository_owner }}
-        JUMP_START_GITHUB_REPO: ${{ github.event.repository.name }}
-        GITHUB_PAGES_BASE_PATH: ${{ steps.outputs.base_path }}
+      JUMP_START_GITHUB_USERNAME: ${{ github.repository_owner }}
+      JUMP_START_GITHUB_REPO: ${{ github.event.repository.name }}
+      GITHUB_PAGES_BASE_PATH: ${{ steps.outputs.base_path }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,7 +47,7 @@ jobs:
           npm run gallery:clone
           npm run gallery:install
           npm run gallery:link
-        
+
       - name: Update readme
         run: npm run update-readme
 
@@ -62,7 +62,7 @@ jobs:
 
       - name: Build site
         run: npm run gallery:build
-        
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
