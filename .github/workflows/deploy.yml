@@ -28,6 +28,7 @@ jobs:
     env:
         JUMP_START_GITHUB_USERNAME: ${{ github.repository_owner }}
         JUMP_START_GITHUB_REPO: ${{ github.event.repository.name }}
+        GITHUB_PAGES_BASE_PATH: ${{ steps.outputs.base_path }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
