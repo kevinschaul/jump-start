@@ -39,11 +39,12 @@ jobs:
           cache: npm
 
       - name: Setup Pages
+        id: pages
         uses: actions/configure-pages@v5
 
       - name: Install dependencies
         env:
-          GITHUB_PAGES_BASE_PATH: ${{ steps.outputs.base_path }}
+          GITHUB_PAGES_BASE_PATH: ${{ steps.pages.base_path }}
         run: |
           npm run gallery:clone
           npm run gallery:install
