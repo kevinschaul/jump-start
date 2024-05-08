@@ -42,13 +42,6 @@ jobs:
         id: pages
         uses: actions/configure-pages@v5
 
-      - name: Dump Pages configuration
-        run: |
-          echo PAGES_BASE_URL:  ${{ steps.pages.outputs.base_url }}
-          echo PAGES_ORIGIN:    ${{ steps.pages.outputs.origin }}
-          echo PAGES_HOST:      ${{ steps.pages.outputs.host }}
-          echo PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
-
       - name: Install dependencies
         run: |
           npm run gallery:clone
@@ -69,7 +62,7 @@ jobs:
 
       - name: Build site
         env:
-          GITHUB_PAGES_BASE_PATH: ${{ steps.pages.base_path }}
+          GITHUB_PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
         run: npm run gallery:build
 
       - name: Upload artifact
