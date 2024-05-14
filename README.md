@@ -11,7 +11,6 @@ A shortcut to my favorite code. Want your own? Check out
 
 #### LineChart
 
-
 ```
 npx degit kevinschaul/jump-start/react-d3/LineChart \
   components/elements/LineChart
@@ -22,7 +21,6 @@ A React component for writing a responsive D3 line chart.
 Tags: `react`, `d3`, `chart`
 
 #### Chart
-
 
 ```
 npx degit kevinschaul/jump-start/react-d3/Chart \
@@ -42,7 +40,6 @@ Tags: `react`, `d3`, `chart`
 
 #### data-analysis
 
-
 ```
 npx degit kevinschaul/jump-start/r/data-analysis analysis
 ```
@@ -54,7 +51,6 @@ A Quarto/R template for data journalism projects
 ### geo
 
 #### pmtiles-counties
-
 
 ```
 npx degit kevinschaul/jump-start/geo/pmtiles-counties geo
