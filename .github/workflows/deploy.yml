@@ -1,5 +1,11 @@
 name: Deploy to Pages
 
+env:
+  # Set one of these to true, depending on whether you want the custom site or
+  # the storybook as your jump-start frontend
+  DEPLOY_CUSTOM_SITE: true
+  DEPLOY_STORYBOOK: false
+
 on:
   # Runs on pushes targeting the default branch
   push:
@@ -46,10 +52,9 @@ jobs:
         run: |
           npm run setup
 
-      - name: Build site
-        env:
-          GITHUB_PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
-        run: npm run build
+      - name: Update readme
+        run: |
+          npm run update-readme
 
       - name: Commit and push
         run: |
@@ -60,10 +65,29 @@ jobs:
           git commit -m "chore: update readme at ${timestamp}" || exit 0
           git push
 
-      - name: Upload artifact
+      - name: Build custom site
+        if: ${{ env.DEPLOY_CUSTOM_SITE == 'true' }}
+        env:
+          GITHUB_PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: npm run build
+
+      - name: Upload custom site artifact
+        if: ${{ env.DEPLOY_CUSTOM_SITE == 'true' }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./jump-start-gallery/dist
+
+      - name: Build storybook
+        if: ${{ env.DEPLOY_STORYBOOK == 'true' }}
+        env:
+          GITHUB_PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: npm run build-storybook
+
+      - name: Upload custom site artifact
+        if: ${{ env.DEPLOY_STORYBOOK == 'true' }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./jump-start-gallery/storybook-static
 
   # Deployment job
   deploy:
