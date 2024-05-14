@@ -44,12 +44,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm run gallery:clone
-          npm run gallery:install
-          npm run gallery:link
+          npm run setup
 
-      - name: Update readme
-        run: npm run update-readme
+      - name: Build site
+        env:
+          GITHUB_PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: npm run build
 
       - name: Commit and push
         run: |
@@ -59,11 +59,6 @@ jobs:
           timestamp=$(date -u)
           git commit -m "chore: update readme at ${timestamp}" || exit 0
           git push
-
-      - name: Build site
-        env:
-          GITHUB_PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
-        run: npm run gallery:build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

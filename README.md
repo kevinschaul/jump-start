@@ -117,10 +117,8 @@ repo](https://github.com/kevinschaul/jump-start-gallery),
 included in this repo as a git submodule. To run the gallery
 locally, using the starters in this repo as its data:
 
-    npm run gallery:clone
-    npm run gallery:install
-    npm run gallery:link
-    npm run gallery:dev
+    npm run setup
+    npm run dev
 
 Open [localhost:3000](localhost:3000) in a browser.
 
