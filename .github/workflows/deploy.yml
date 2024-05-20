@@ -56,6 +56,15 @@ jobs:
         run: |
           npm run update-readme
 
+      - name: Commit and push
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add -A
+          timestamp=$(date -u)
+          git commit -m "chore: update readme at ${timestamp}" || exit 0
+          git push
+
       - name: Set up Python
         if: ${{ env.DEPLOY_CUSTOM_SITE == 'true' }}
         uses: actions/setup-python@v5
@@ -95,15 +104,6 @@ jobs:
           npm run gallery:dev &
           sleep 2 &&
           npm run update-screenshots
-
-      - name: Commit and push
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add -A
-          timestamp=$(date -u)
-          git commit -m "chore: update readme at ${timestamp}" || exit 0
-          git push
 
       - name: Build custom site
         if: ${{ env.DEPLOY_CUSTOM_SITE == 'true' }}
