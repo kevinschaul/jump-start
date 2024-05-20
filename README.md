@@ -48,6 +48,18 @@ A Quarto/R template for data journalism projects
 
 ---
 
+### python
+
+#### script
+
+```
+npx degit kevinschaul/jump-start/python/script python/script
+```
+
+A python script with argparse
+
+---
+
 ### geo
 
 #### pmtiles-counties
