@@ -101,7 +101,7 @@ jobs:
         if: ${{ env.DEPLOY_CUSTOM_SITE == 'true' }}
         run: |
           mkdir -p jump-start-gallery/public/screenshots &&
-          npm run gallery:dev &
+          npm run dev &
           sleep 2 &&
           npm run update-screenshots
 
