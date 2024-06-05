@@ -130,6 +130,20 @@ locally, using the starters in this repo as its data:
 
 Open [localhost:3000](localhost:3000) in a browser.
 
+Alternatively, there is a Storybook presentation that you can use:
+
+    npm run setup
+    npm run storybook
+
+Open localhost:6006 in a browser.
+
+## Deploying the gallery to Github Pages
+
+This repo includes a [deploy workflow](.github/workflows/deploy.yml) that
+deploys your jump start gallery to Github pages. By default the custom
+gallery frontend is used, but you can edit the env variables in
+[.env](.env) to deploy the Storybook version instead.
+
 ## Updating the gallery code
 
 The snapshot of the jump-start-gallery code in this repo will

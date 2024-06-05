@@ -1,11 +1,5 @@
 name: Deploy to Pages
 
-env:
-  # Set one of these to true, depending on whether you want the custom site or
-  # the storybook as your jump-start frontend
-  DEPLOY_CUSTOM_SITE: true
-  DEPLOY_STORYBOOK: false
-
 on:
   # Runs on pushes targeting the default branch
   push:
@@ -32,11 +26,17 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.repository != 'kevinschaul/jump-start-template' }}
     env:
-      JUMP_START_GITHUB_USERNAME: ${{ github.repository_owner }}
-      JUMP_START_GITHUB_REPO: ${{ github.event.repository.name }}
+      GITHUB_USERNAME: ${{ github.repository_owner }}
+      GITHUB_REPO: ${{ github.event.repository.name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Dotenv
+        id: dotenv
+        uses: falti/dotenv-action@v1.1.2
+        with:
+          keys-case: bypass
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -66,13 +66,13 @@ jobs:
           git push
 
       - name: Set up Python
-        if: ${{ env.DEPLOY_CUSTOM_SITE == 'true' }}
+        if: ${{ steps.dotenv.outputs.DEPLOY_CUSTOM_SITE == 'true' }}
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
       - uses: actions/cache@v4
-        if: ${{ env.DEPLOY_CUSTOM_SITE == 'true' }}
+        if: ${{ steps.dotenv.outputs.DEPLOY_CUSTOM_SITE == 'true' }}
         name: Configure pip caching
         with:
           path: ~/.cache/pip
@@ -81,24 +81,24 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Cache Playwright browsers
-        if: ${{ env.DEPLOY_CUSTOM_SITE == 'true' }}
+        if: ${{ steps.dotenv.outputs.DEPLOY_CUSTOM_SITE == 'true' }}
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright/
           key: ${{ runner.os }}-browsers
 
       - name: Install Python dependencies
-        if: ${{ env.DEPLOY_CUSTOM_SITE == 'true' }}
+        if: ${{ steps.dotenv.outputs.DEPLOY_CUSTOM_SITE == 'true' }}
         run: |
           pip install -r jump-start-gallery/requirements.txt
 
       - name: Install Playwright dependencies
-        if: ${{ env.DEPLOY_CUSTOM_SITE == 'true' }}
+        if: ${{ steps.dotenv.outputs.DEPLOY_CUSTOM_SITE == 'true' }}
         run: |
           shot-scraper install
 
       - name: Start server and take screenshots
-        if: ${{ env.DEPLOY_CUSTOM_SITE == 'true' }}
+        if: ${{ steps.dotenv.outputs.DEPLOY_CUSTOM_SITE == 'true' }}
         run: |
           mkdir -p jump-start-gallery/public/screenshots &&
           npm run dev &
@@ -106,25 +106,25 @@ jobs:
           npm run update-screenshots
 
       - name: Build custom site
-        if: ${{ env.DEPLOY_CUSTOM_SITE == 'true' }}
+        if: ${{ steps.dotenv.outputs.DEPLOY_CUSTOM_SITE == 'true' }}
         env:
           GITHUB_PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
         run: npm run build
 
       - name: Upload custom site artifact
-        if: ${{ env.DEPLOY_CUSTOM_SITE == 'true' }}
+        if: ${{ steps.dotenv.outputs.DEPLOY_CUSTOM_SITE == 'true' }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./jump-start-gallery/dist
 
       - name: Build storybook
-        if: ${{ env.DEPLOY_STORYBOOK == 'true' }}
+        if: ${{ steps.dotenv.outputs.DEPLOY_STORYBOOK == 'true' }}
         env:
           GITHUB_PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
         run: npm run build-storybook
 
       - name: Upload custom site artifact
-        if: ${{ env.DEPLOY_STORYBOOK == 'true' }}
+        if: ${{ steps.dotenv.outputs.DEPLOY_STORYBOOK == 'true' }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./jump-start-gallery/storybook-static

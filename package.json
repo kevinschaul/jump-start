@@ -13,7 +13,7 @@
     "gallery:clone": "git submodule update --init",
     "gallery:update": "git submodule sync --recursive",
     "gallery:install": "cd jump-start-gallery && npm install",
-    "gallery:link": "cd jump-start-gallery && rm -f src/starters && ln -sf ../../ src/starters"
+    "gallery:link": "cd jump-start-gallery && rm -f src/starters && ln -sf ../../ src/starters && rm -rf .env && ln -sf ../.env .env"
   },
   "repository": {
     "type": "git",
