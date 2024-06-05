@@ -12,7 +12,7 @@ A shortcut to my favorite code. Want your own? Check out
 #### LineChart
 
 ```
-npx degit kevinschaul/jump-start/react-d3/LineChart \
+npx tiged kevinschaul/jump-start/react-d3/LineChart \
   components/elements/LineChart
 ```
 
@@ -23,7 +23,7 @@ Tags: `react`, `d3`, `chart`
 #### Chart
 
 ```
-npx degit kevinschaul/jump-start/react-d3/Chart \
+npx tiged kevinschaul/jump-start/react-d3/Chart \
   components/elements/Chart
 ```
 
@@ -41,7 +41,7 @@ Tags: `react`, `d3`, `chart`
 #### data-analysis
 
 ```
-npx degit kevinschaul/jump-start/r/data-analysis analysis
+npx tiged kevinschaul/jump-start/r/data-analysis analysis
 ```
 
 A Quarto/R template for data journalism projects
@@ -53,7 +53,7 @@ A Quarto/R template for data journalism projects
 #### script
 
 ```
-npx degit kevinschaul/jump-start/python/script python/script
+npx tiged kevinschaul/jump-start/python/script python/script
 ```
 
 A python script with argparse
@@ -65,7 +65,7 @@ A python script with argparse
 #### pmtiles-counties
 
 ```
-npx degit kevinschaul/jump-start/geo/pmtiles-counties geo
+npx tiged kevinschaul/jump-start/geo/pmtiles-counties geo
 ```
 
 A demo Makefile for creating map tiles at the county level
