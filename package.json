@@ -10,8 +10,8 @@
     "build-storybook": "cd jump-start-gallery && JUMP_START_STARTERS=../ npm run build-storybook",
     "update-readme": "cd jump-start-gallery && JUMP_START_STARTERS=../ npm run update-readme",
     "update-screenshots": "cd jump-start-gallery && JUMP_START_STARTERS=../ npm run update-screenshots",
-    "gallery:clone": "git submodule update --init",
-    "gallery:update": "git submodule sync --recursive",
+    "gallery:clone": "git submodule update --init --remote",
+    "gallery:update": "git submodule update --recursive --remote --rebase",
     "gallery:install": "cd jump-start-gallery && npm install",
     "gallery:link": "cd jump-start-gallery && rm -f src/starters && ln -sf ../../ src/starters && rm -rf .env && ln -sf ../.env .env"
   },
