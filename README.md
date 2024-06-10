@@ -77,7 +77,9 @@ Why not use jump-start to add a starter? Run the following command, replacing
 STARTER_GROUP with a group name (e.g. `react`), and STARTER_NAME with a
 starter name (e.g. `BarChart`).
 
-    npx degit kevinschaul/jump-start-template/example/starter STARTER_GROUP/STARTER_NAME
+```
+npx degit kevinschaul/jump-start-template/example/starter STARTER_GROUP/STARTER_NAME
+```
 
 Then, add your code, and edit the generated `jump-start.yaml` file to your liking.
 
@@ -125,15 +127,19 @@ repo](https://github.com/kevinschaul/jump-start-gallery),
 included in this repo as a git submodule. To run the gallery
 locally, using the starters in this repo as its data:
 
-    npm run setup
-    npm run dev
+```
+npm run setup
+npm run dev
+```
 
 Open [localhost:3000](localhost:3000) in a browser.
 
 Alternatively, there is a Storybook presentation that you can use:
 
-    npm run setup
-    npm run storybook
+```
+npm run setup
+npm run storybook
+```
 
 Open localhost:6006 in a browser.
 
@@ -149,5 +155,8 @@ gallery frontend is used, but you can edit the env variables in
 The snapshot of the jump-start-gallery code in this repo will
 inevitibly get outdated. To update it to the latest version:
 
-    npm run gallery:update
+```
+npm run gallery:update
+```
+
  
