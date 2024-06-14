@@ -50,7 +50,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm run setup
+          npm ci
 
       - name: Update readme
         run: |
@@ -65,69 +65,15 @@ jobs:
           git commit -m "chore: update readme at ${timestamp}" || exit 0
           git push
 
-      - name: Set up Python
-        if: ${{ steps.dotenv.outputs.DEPLOY_CUSTOM_SITE == 'true' }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - uses: actions/cache@v4
-        if: ${{ steps.dotenv.outputs.DEPLOY_CUSTOM_SITE == 'true' }}
-        name: Configure pip caching
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Cache Playwright browsers
-        if: ${{ steps.dotenv.outputs.DEPLOY_CUSTOM_SITE == 'true' }}
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright/
-          key: ${{ runner.os }}-browsers
-
-      - name: Install Python dependencies
-        if: ${{ steps.dotenv.outputs.DEPLOY_CUSTOM_SITE == 'true' }}
-        run: |
-          pip install -r jump-start-gallery/requirements.txt
-
-      - name: Install Playwright dependencies
-        if: ${{ steps.dotenv.outputs.DEPLOY_CUSTOM_SITE == 'true' }}
-        run: |
-          shot-scraper install
-
-      - name: Start server and take screenshots
-        if: ${{ steps.dotenv.outputs.DEPLOY_CUSTOM_SITE == 'true' }}
-        run: |
-          mkdir -p jump-start-gallery/public/screenshots &&
-          npm run dev &
-          sleep 2 &&
-          npm run update-screenshots
-
-      - name: Build custom site
-        if: ${{ steps.dotenv.outputs.DEPLOY_CUSTOM_SITE == 'true' }}
-        env:
-          GITHUB_PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
-        run: npm run build
-
-      - name: Upload custom site artifact
-        if: ${{ steps.dotenv.outputs.DEPLOY_CUSTOM_SITE == 'true' }}
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./jump-start-gallery/dist
-
       - name: Build storybook
-        if: ${{ steps.dotenv.outputs.DEPLOY_STORYBOOK == 'true' }}
         env:
           GITHUB_PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
         run: npm run build-storybook
 
       - name: Upload custom site artifact
-        if: ${{ steps.dotenv.outputs.DEPLOY_STORYBOOK == 'true' }}
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./jump-start-gallery/storybook-static
+          path: ./dist
 
   # Deployment job
   deploy:

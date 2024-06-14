@@ -3,17 +3,10 @@
   "version": "0.0.0",
   "description": "A shortcut to your favorite code",
   "scripts": {
-    "setup": "npm run gallery:clone && npm run gallery:install && npm run gallery:link",
-    "dev": "cd jump-start-gallery && JUMP_START_STARTERS=../ npm run dev",
-    "build": "cd jump-start-gallery && JUMP_START_STARTERS=../ npm run build",
-    "storybook": "cd jump-start-gallery && JUMP_START_STARTERS=../ npm run storybook",
-    "build-storybook": "cd jump-start-gallery && JUMP_START_STARTERS=../ npm run build-storybook",
-    "update-readme": "cd jump-start-gallery && JUMP_START_STARTERS=../ npm run update-readme",
-    "update-screenshots": "cd jump-start-gallery && JUMP_START_STARTERS=../ npm run update-screenshots",
-    "gallery:clone": "git submodule update --init --remote",
-    "gallery:update": "git submodule update --recursive --remote --rebase",
-    "gallery:install": "cd jump-start-gallery && npm install",
-    "gallery:link": "cd jump-start-gallery && rm -f src/starters && ln -sf ../../ src/starters && rm -rf .env && ln -sf ../.env .env"
+    "dev": "npm run storybook",
+    "storybook": "npx jump-start storybook",
+    "build-storybook": "npx jump-start build-storybook",
+    "update-readme": "npx jump-start update-readme"
   },
   "repository": {
     "type": "git",
@@ -28,5 +21,7 @@
     "url": "https://github.com/kevinschaul/jump-start-template/issues"
   },
   "homepage": "https://github.com/kevinschaul/jump-start-template#readme",
-  "dependencies": {}
+  "dependencies": {
+    "jump-start-tools": "^0.1.0-rc.1"
+  }
 }
