@@ -118,45 +118,23 @@ I've only used "react" but others may work too.
 dependencies for Sandpack to use for the preview. Think of it as the
 `package.json` file for the preview. Anything your starter needs should be
 listed here.
-
   
 ## Running the gallery locally
 
 The jump-start gallery code lives in [a separate
 repo](https://github.com/kevinschaul/jump-start-gallery),
-included in this repo as a git submodule. To run the gallery
+included here as an npm package. To run the gallery
 locally, using the starters in this repo as its data:
 
 ```
-npm run setup
+npm install
 npm run dev
 ```
 
-Open [localhost:3000](localhost:3000) in a browser.
-
-Alternatively, there is a Storybook presentation that you can use:
-
-```
-npm run setup
-npm run storybook
-```
-
-Open localhost:6006 in a browser.
+Open [localhost:6006](localhost:6006) in a browser.
 
 ## Deploying the gallery to Github Pages
 
 This repo includes a [deploy workflow](.github/workflows/deploy.yml) that
-deploys your jump start gallery to Github pages. By default the custom
-gallery frontend is used, but you can edit the env variables in
-[.env](.env) to deploy the Storybook version instead.
-
-## Updating the gallery code
-
-The snapshot of the jump-start-gallery code in this repo will
-inevitibly get outdated. To update it to the latest version:
-
-```
-npm run gallery:update
-```
-
+deploys your jump start gallery to Github pages.
  
