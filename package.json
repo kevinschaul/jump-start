@@ -1,6 +1,6 @@
 {
   "name": "jump-start-template",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A shortcut to your favorite code",
   "scripts": {
     "dev": "npm run storybook",
@@ -22,6 +22,6 @@
   },
   "homepage": "https://github.com/kevinschaul/jump-start-template#readme",
   "dependencies": {
-    "jump-start-tools": "^0.1.0-rc.3"
+    "jump-start-tools": "^0.1.0"
   }
 }
