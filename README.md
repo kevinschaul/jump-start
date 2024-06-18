@@ -60,6 +60,31 @@ A python script with argparse
 
 ---
 
+### node
+
+#### cli
+
+```
+npx tiged kevinschaul/jump-start/node/cli node/cli
+```
+
+A node/ts CLI with argument parser, subcommands and tests.
+
+Develop the command with:
+
+```
+npm install
+npm run dev
+```
+
+Test with:
+
+```
+npm test
+```
+
+---
+
 ### geo
 
 #### pmtiles-counties
