@@ -1,0 +1,17 @@
+---
+description: |
+  A node/ts CLI with argument parser, subcommands and tests.
+  
+  Develop the command with:
+
+  ```
+  npm install
+  npm run dev
+  ```
+
+  Test with:
+
+  ```
+  npm test
+  ```
+mainFile: bin/cli.ts

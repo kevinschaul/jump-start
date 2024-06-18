@@ -1,0 +1,20 @@
+{
+  "name": "your-name",
+  "version": "0.0.0",
+  "type": "module",
+  "bin": {
+    "your-command": "bin/cli.ts"
+  },
+  "scripts": {
+    "your-command": "bin/cli.ts",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "commander": "^12",
+    "tsx": "^4",
+    "vitest": "^1"
+  },
+  "devDependencies": {
+    "@types/node": "^20"
+  }
+}
