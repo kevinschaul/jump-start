@@ -74,7 +74,7 @@ jobs:
         name: Configure pip caching
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('node_modules/jump-start-tools/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
@@ -86,7 +86,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          pip install -r jump-start-gallery/requirements.txt
+          pip install -r node_modules/jump-start-tools/requirements.txt
 
       - name: Install Playwright dependencies
         run: |
