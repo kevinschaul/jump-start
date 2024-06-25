@@ -22,6 +22,6 @@
   },
   "homepage": "https://github.com/kevinschaul/jump-start-template#readme",
   "dependencies": {
-    "jump-start-tools": "^0.2.0-rc.2"
+    "jump-start-tools": "^0.1"
   }
 }
