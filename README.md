@@ -85,6 +85,19 @@ npm test
 
 ---
 
+### github-actions
+
+#### node-release-please
+
+```
+npx tiged kevinschaul/jump-start/github-actions/node-release-please \
+  .github/workflows
+```
+
+GitHub action for automating release PRs and npm releases with [release-please](https://github.com/googleapis/release-please-action)
+
+---
+
 ### geo
 
 #### pmtiles-counties
