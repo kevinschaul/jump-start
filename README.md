@@ -171,6 +171,43 @@ dependencies for Sandpack to use for the preview. Think of it as the
 `package.json` file for the preview. Anything your starter needs should be
 listed here.
 
+### `degit.json`
+
+`jump-start` uses the [`tiged`](https://github.com/tiged/tiged) command to pull
+starter files out of GitHub. That command has a feature that allows for some
+actions to be run upon cloning -- most notably allowing a starter to remove
+files. Those actions are defined in a file called `degit.json`.
+
+Why `degit`, you reasonably ask? Well
+[`degit`](https://github.com/Rich-Harris/degit) was the original tool, but it
+has been abandoned. `tiged` is the updated fork. `tiged` is `degit` spelled
+backwards.
+
+It is likely you'll want all of your starters to include the following
+`degit.json` file, which automatically removes `jump-start.yaml` after your
+started is used:
+
+```
+[
+	{
+		"action": "remove",
+		"files": ["jump-start.yaml"]
+	}
+]
+```
+
+## Customizing gallery-wide settings with `.env`
+
+`jump-start` uses `.env` for a few settings:
+
+- `GITHUB_USERNAME`: GitHub usename used in commands and links. This is set by
+  default in the deploy GitHub action.
+- `GITHUB_REPO`: GitHub repo name used in commands and links. This is set by
+  default in the deploy GitHub action.
+- `DEGIT_MODE`: Sets [`tiged`'s `--mode`
+  option](https://github.com/tiged/tiged?tab=readme-ov-file#private-repositories).
+  Can be "tar" (the default) or "git".
+
 ## Running the gallery locally
 
 The jump-start gallery code lives in [a separate
