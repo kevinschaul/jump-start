@@ -43,8 +43,8 @@ npx tiged kevinschaul/jump-start/react-d3/Chart \
 
 An empty React component for writing a responsive D3 chart.
 
-- Adds size prop
-- Sets up margin convention
+* Adds size prop
+* Sets up margin convention
 
 Tags: `react`, `d3`, `chart`
 
@@ -121,6 +121,7 @@ npx tiged kevinschaul/jump-start/geo/pmtiles-counties geo
 ```
 
 A demo Makefile for creating map tiles at the county level
+
 
 ## Adding a starter
 
