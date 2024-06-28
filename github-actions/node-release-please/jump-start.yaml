@@ -1,0 +1,4 @@
+---
+description: |
+  GitHub action for automating release PRs and npm releases with [release-please](https://github.com/googleapis/release-please-action)
+defaultDir: .github/workflows
