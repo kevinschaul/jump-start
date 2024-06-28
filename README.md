@@ -3,6 +3,20 @@
 A shortcut to my favorite code. Want your own? Check out
 [kevinschaul/jump-start-template](https://github.com/kevinschaul/jump-start-template).
 
+`jump-start` is a lightweight system to organize that code that
+you keep coming back to. It’s a structured GitHub repository
+and a web frontend.
+
+A **starter** is a directory of code that you like -- whether
+it’s a single script or an entire app. Each starter lives in a
+**group** directory. Organize similar code for easier
+navigation.
+
+When you want to use your favorite code, locate that starter
+either in this README.md or in your gallery website. Copy the
+command, and run it in your terminal. Your starter code is now
+in your project.
+
 ## Starters
 
 ---
@@ -29,8 +43,8 @@ npx tiged kevinschaul/jump-start/react-d3/Chart \
 
 An empty React component for writing a responsive D3 chart.
 
-* Adds size prop
-* Sets up margin convention
+- Adds size prop
+- Sets up margin convention
 
 Tags: `react`, `d3`, `chart`
 
@@ -108,7 +122,6 @@ npx tiged kevinschaul/jump-start/geo/pmtiles-counties geo
 
 A demo Makefile for creating map tiles at the county level
 
-
 ## Adding a starter
 
 Why not use jump-start to add a starter? Run the following command, replacing
@@ -156,7 +169,7 @@ I've only used "react" but others may work too.
 dependencies for Sandpack to use for the preview. Think of it as the
 `package.json` file for the preview. Anything your starter needs should be
 listed here.
-  
+
 ## Running the gallery locally
 
 The jump-start gallery code lives in [a separate
@@ -175,4 +188,3 @@ Open [localhost:6006](localhost:6006) in a browser.
 
 This repo includes a [deploy workflow](.github/workflows/deploy.yml) that
 deploys your jump start gallery to Github pages.
- 
