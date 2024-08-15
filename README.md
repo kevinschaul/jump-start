@@ -24,6 +24,7 @@ in your project.
 
 Jump to group:
 - [react-d3](#react-d3)
+- [react](#react)
 - [r](#r)
 - [python](#python)
 - [node](#node)
@@ -55,6 +56,36 @@ An empty React component for writing a responsive D3 chart.
 
 * Adds size prop
 * Sets up margin convention
+
+---
+### react
+
+react/**useViewportHeightUnits**
+
+```
+npx tiged kevinschaul/jump-start/react/useViewportHeightUnits \
+  react/useViewportHeightUnits
+```
+
+Makes the newer CSS height units available in JS, like `lvh` and `svh`
+https://css-tricks.com/the-large-small-and-dynamic-viewports/
+
+Implementation based on
+https://github.com/joppuyo/large-small-dynamic-viewport-units-polyfill
+
+---
+react/**useMediaQuery**
+
+```
+npx tiged kevinschaul/jump-start/react/useMediaQuery \
+  react/useMediaQuery
+```
+
+Makes CSS media queries available in JS. Use like:
+
+```
+const isSkinny = useMediaQuery('(max-width: 600px)')
+```
 
 ---
 ### r
