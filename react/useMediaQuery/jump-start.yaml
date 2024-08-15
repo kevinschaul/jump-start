@@ -1,0 +1,8 @@
+---
+description: |
+  Makes CSS media queries available in JS. Use like:
+
+  ```
+  const isSkinny = useMediaQuery('(max-width: 600px)')
+  ```
+defaultDir:

@@ -1,0 +1,8 @@
+---
+description: |
+  Makes the newer CSS height units available in JS, like `lvh` and `svh`
+  https://css-tricks.com/the-large-small-and-dynamic-viewports/
+
+  Implementation based on
+  https://github.com/joppuyo/large-small-dynamic-viewport-units-polyfill
+defaultDir:
