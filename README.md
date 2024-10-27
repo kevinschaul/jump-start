@@ -90,6 +90,15 @@ const isSkinny = useMediaQuery('(max-width: 600px)')
 ---
 ### r
 
+r/**round**
+
+```
+npx tiged kevinschaul/jump-start/r/round r/round
+```
+
+Round with common behavior of rounding halves up
+
+---
 r/**data-analysis**
 
 ```
