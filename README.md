@@ -194,7 +194,7 @@ geo/**counties.mk**
 npx tiged kevinschaul/jump-start/geo/counties.mk analysis
 ```
 
-A Makefile that creates a counties geojson file using my [ideal project structure](https://kschaul.com/jump-start/?path=/docs/project-structure-analysis--docs). Usage:
+A Makefile that creates a counties geojson file using my [ideal project structure](). Usage:
 
 ```make
 # Makefile
