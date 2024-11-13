@@ -100,15 +100,6 @@ npx tiged kevinschaul/jump-start/r/round r/round
 Round with common behavior of rounding halves up
 
 ---
-r/**data-analysis**
-
-```
-npx tiged kevinschaul/jump-start/r/data-analysis analysis
-```
-
-A Quarto/R template for data journalism projects
-
----
 ### python
 
 python/**script**
