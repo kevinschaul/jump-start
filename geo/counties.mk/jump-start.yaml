@@ -1,0 +1,12 @@
+---
+description: |
+  A Makefile that creates a counties geojson file. Usage:
+
+  ```
+  # Makefile
+  include counties.mk
+
+  all: data/build/counties.geojson
+  ```
+defaultDir: analysis
+mainFile: counties.mk
