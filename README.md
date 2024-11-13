@@ -27,6 +27,7 @@ Jump to group:
 - [react](#react)
 - [r](#r)
 - [python](#python)
+- [project-structure](#project-structure)
 - [node](#node)
 - [github-actions](#github-actions)
 - [geo](#geo)
@@ -119,6 +120,36 @@ npx tiged kevinschaul/jump-start/python/script python/script
 A python script with argparse
 
 ---
+### project-structure
+
+project-structure/**analysis**
+
+```
+npx tiged kevinschaul/jump-start/project-structure/analysis \
+  analysis
+```
+
+Builds out the analysis portion of my ideal project structure. The structure looks like this:
+
+```
+xx_project_slug
+|-- analysis
+|   |-- .gitignore
+|   |-- analysis.Rproj         r studio project
+|   |-- Makefile               can include other makefiles
+|   |-- counties.mk            @kevinschaul/jump-start/geo/counties.mk
+|   |-- data
+|   |   |-- raw                raw files needed to generate build/clean
+|   |   |-- build              generated files; gitignored
+|   |   `-- clean              outputs for project; gitignored
+|   |-- scripts
+|   `-- observable             observable framework app
+|       |-- src
+|       `-- data -> ../data    symlink
+`...                           rest of project goes here
+```
+
+---
 ### node
 
 node/**cli**
@@ -172,9 +203,9 @@ geo/**counties.mk**
 npx tiged kevinschaul/jump-start/geo/counties.mk analysis
 ```
 
-A Makefile that creates a counties geojson file. Usage:
+A Makefile that creates a counties geojson file using my [ideal project structure](). Usage:
 
-```
+```make
 # Makefile
 include counties.mk
 
