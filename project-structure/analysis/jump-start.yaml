@@ -1,0 +1,22 @@
+---
+description: |
+  Builds out the analysis portion of my ideal project structure. The structure looks like this:
+
+  ```
+  xx_project_slug
+  |-- analysis
+  |   |-- .gitignore
+  |   |-- analysis.Rproj         r studio project
+  |   |-- Makefile               can include other makefiles
+  |   |-- counties.mk            @kevinschaul/jump-start/geo/counties.mk
+  |   |-- data
+  |   |   |-- raw                raw files needed to generate build/clean
+  |   |   |-- build              generated files; gitignored
+  |   |   `-- clean              outputs for project; gitignored
+  |   |-- scripts
+  |   `-- observable             observable framework app
+  |       |-- src
+  |       `-- data -> ../data    symlink
+  `...                           rest of project goes here
+  ```
+defaultDir: analysis

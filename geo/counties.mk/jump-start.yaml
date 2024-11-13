@@ -1,8 +1,8 @@
 ---
 description: |
-  A Makefile that creates a counties geojson file. Usage:
+  A Makefile that creates a counties geojson file using my [ideal project structure](). Usage:
 
-  ```
+  ```make
   # Makefile
   include counties.mk
 
