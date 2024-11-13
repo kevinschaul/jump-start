@@ -166,6 +166,22 @@ npx tiged kevinschaul/jump-start/geo/pmtiles-counties geo
 A demo Makefile for creating map tiles at the county level
 
 ---
+geo/**counties.mk**
+
+```
+npx tiged kevinschaul/jump-start/geo/counties.mk analysis
+```
+
+A Makefile that creates a counties geojson file. Usage:
+
+```
+# Makefile
+include counties.mk
+
+all: data/build/counties.geojson
+```
+
+---
 
 ## Adding a starter
 
