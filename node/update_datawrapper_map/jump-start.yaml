@@ -1,0 +1,8 @@
+---
+description: |
+  A script to update a Datawrapper map's marker with a geojson file
+
+  Downloads the current map info, replaces the specified marker with a geojson file, and re-uploads the map info.
+
+  Usage: node update_datawrapper_map.js CHART_ID MARKER_TO_REPLACE PATH_TO_GEOJSON
+mainFile: update_datawrapper_map.js
