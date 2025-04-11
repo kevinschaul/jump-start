@@ -1,0 +1,7 @@
+# project
+
+## Setup
+
+```
+uv sync
+```
