@@ -133,6 +133,15 @@ Template 3   200          81.00%     86.90%     73.00%     79.35%
 ```
 
 ---
+python/**project**
+
+```
+npx tiged kevinschaul/jump-start/python/project .
+```
+
+A basic python project, using uv
+
+---
 ### project-structure
 
 project-structure/**analysis**
