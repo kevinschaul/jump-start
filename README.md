@@ -111,6 +111,28 @@ npx tiged kevinschaul/jump-start/python/script python/script
 A python script with argparse
 
 ---
+python/**pytest-evals-helpers**
+
+```
+npx tiged kevinschaul/jump-start/python/pytest-evals-helpers \
+  python/pytest-evals-helpers
+```
+
+Given a bag of eval_results, generate metrics per prompt template, print
+them out and optionally save them to a file.
+
+For use with [pytest-evals](https://github.com/AlmogBaku/pytest-evals)
+
+```
+===== Metrics by Prompt Template =====
+Template ID  Sample Size  Accuracy   Precision  Recall     F1        
+-----------------------------------------------------------------
+Template 1   200          84.00%     81.48%     88.00%     84.62%    
+Template 2   200          83.50%     79.13%     91.00%     84.65%    
+Template 3   200          81.00%     86.90%     73.00%     79.35%    
+```
+
+---
 ### project-structure
 
 project-structure/**analysis**
@@ -143,6 +165,36 @@ xx_project_slug
 ---
 ### node
 
+node/**update_datawrapper_map**
+
+```
+npx tiged kevinschaul/jump-start/node/update_datawrapper_map \
+  node/update_datawrapper_map
+```
+
+A script to update a Datawrapper map's marker with a geojson file
+
+Downloads the current map info, replaces the specified marker with a geojson file, and re-uploads the map info.
+
+Usage: node update_datawrapper_map.js CHART_ID MARKER_TO_REPLACE PATH_TO_GEOJSON
+
+---
+node/**timestamp_if_changed**
+
+```
+npx tiged kevinschaul/jump-start/node/timestamp_if_changed \
+  node/timestamp_if_changed
+```
+
+A script to help organize timestamped versions of a file. Useful when you download a file every so often but only want to save it if its contents have changed.
+
+Given a file, make a copy of LATEST_FILE with the current timestamp appended to the filename if the file is different from the previous version. The previous version is the file in the directory of LATEST_FILE with the same prefix as LATEST_FILE that has the most recent timestamp in its filename.
+
+e.g. "evacuations-latest.geojson" would become "evacuations-2025-01-08T12:03:01.geojson"
+
+Usage: node timestamp_if_changed.js LATEST_FILE
+
+---
 node/**cli**
 
 ```
