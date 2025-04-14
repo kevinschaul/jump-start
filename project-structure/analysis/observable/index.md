@@ -1,7 +1,7 @@
 # China imports
 
 ```js
-const data = FileAttachment("data/clean/imports.csv").csv({typed: true});
+const data = FileAttachment("data/clean/data.csv").csv({typed: true});
 ```
 
 ```js
