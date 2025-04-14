@@ -165,9 +165,10 @@ xx_project_slug
 |   |   |-- build              generated files; gitignored
 |   |   `-- clean              outputs for project; gitignored
 |   |-- scripts
+|   |-- observablehq.config.js observable framework config
 |   `-- observable             observable framework app
-|       |-- src
-|       `-- data -> ../data    symlink
+|       |-- data -> ../data    symlink
+|       `-- index.md
 `...                           rest of project goes here
 ```
 
