@@ -38,6 +38,9 @@ jobs:
         with:
           keys-case: bypass
 
+      - name: Setup rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -48,13 +51,13 @@ jobs:
         id: pages
         uses: actions/configure-pages@v5
 
-      - name: Install dependencies
+      - name: Install rust dependencies
         run: |
-          npm ci
+          cargo install jump-start
 
       - name: Update readme
         run: |
-          npm run update-readme
+          jump-start update-readme
 
       - name: Commit and push
         run: |
@@ -64,6 +67,10 @@ jobs:
           timestamp=$(date -u)
           git commit -m "chore: update readme at ${timestamp}" || exit 0
           git push
+
+      - name: Install npm dependencies
+        run: |
+          npm ci
 
       - name: Build storybook
         env:
