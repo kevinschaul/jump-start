@@ -53,11 +53,11 @@ jobs:
 
       - name: Install rust dependencies
         run: |
-          cargo install jump-start
+          cargo install jump-start@0.1.1-alpha-3
 
       - name: Update readme
         run: |
-          jump-start update-readme
+          jump-start update-readme --instance-path .
 
       - name: Commit and push
         run: |
@@ -75,7 +75,7 @@ jobs:
       - name: Build storybook
         env:
           GITHUB_PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
-        run: npm run build-storybook
+        run: jump-start storybook prod --instance-path . --output dist
 
       - name: Upload custom site artifact
         uses: actions/upload-pages-artifact@v3
