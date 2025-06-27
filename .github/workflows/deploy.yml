@@ -59,6 +59,7 @@ jobs:
         run: |
           which jump-start
           jump-start --help
+          jump-start config
           config_path="$(jump-start config)"
           mkdir -p "$(dirname "$config_path")"
           echo '{ "instances": [{ "name": "default", "path": ".", "default": true }] }' > "$config_path"
