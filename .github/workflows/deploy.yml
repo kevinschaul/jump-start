@@ -55,6 +55,12 @@ jobs:
         run: |
           cargo install jump-start@0.1.1-alpha-3
 
+      - name: Set up jump-start CLI
+        run: |
+          config_path="$(jump-start config)"
+          mkdir -p "$(dirname "$config_path")"
+          echo '{ "instances": [{ "name": "default", "path": ".", "default": true }] }' > "$config_path"
+
       - name: Update readme
         run: |
           jump-start update-readme --instance-path .
