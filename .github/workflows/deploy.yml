@@ -45,6 +45,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: npm
 
       - name: Setup Pages
         id: pages
@@ -72,6 +73,10 @@ jobs:
           timestamp=$(date -u)
           git commit -m "chore: update readme at ${timestamp}" || exit 0
           git push
+
+      - name: Install npm dependencies
+        run: |
+          npm ci
 
       - name: Build storybook
         env:
