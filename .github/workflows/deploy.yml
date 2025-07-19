@@ -52,7 +52,7 @@ jobs:
 
       - name: Install rust dependencies
         run: |
-          cargo install jump-start@0.1.1-alpha-6
+          cargo install jump-start@0.1.1-alpha-7
 
       - name: Set up jump-start CLI
         run: |
