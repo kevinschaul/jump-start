@@ -39,7 +39,7 @@ Jump to group:
 geo/**counties.mk**
 
 ```
-jump-start use geo/counties.mk
+jump-start use @kevinschaul/geo/counties.mk
 ```
 
 A Makefile that creates a counties geojson file using my [ideal project structure](). Usage:
@@ -55,7 +55,7 @@ all: data/build/counties.geojson
 geo/**pmtiles-counties**
 
 ```
-jump-start use geo/pmtiles-counties
+jump-start use @kevinschaul/geo/pmtiles-counties
 ```
 
 A demo Makefile for creating map tiles at the county level
@@ -66,7 +66,7 @@ A demo Makefile for creating map tiles at the county level
 github-actions/**node-release-please**
 
 ```
-jump-start use github-actions/node-release-please
+jump-start use @kevinschaul/github-actions/node-release-please
 ```
 
 GitHub action for automating release PRs and npm releases with [release-please](https://github.com/googleapis/release-please-action)
@@ -77,7 +77,7 @@ GitHub action for automating release PRs and npm releases with [release-please](
 node/**cli**
 
 ```
-jump-start use node/cli
+jump-start use @kevinschaul/node/cli
 ```
 
 A node/ts CLI with argument parser, subcommands and tests.
@@ -99,7 +99,7 @@ npm test
 node/**timestamp_if_changed**
 
 ```
-jump-start use node/timestamp_if_changed
+jump-start use @kevinschaul/node/timestamp_if_changed
 ```
 
 A script to help organize timestamped versions of a file. Useful when you download a file every so often but only want to save it if its contents have changed.
@@ -114,7 +114,7 @@ Usage: node timestamp_if_changed.js LATEST_FILE
 node/**update_datawrapper_map**
 
 ```
-jump-start use node/update_datawrapper_map
+jump-start use @kevinschaul/node/update_datawrapper_map
 ```
 
 A script to update a Datawrapper map's marker with a geojson file
@@ -129,7 +129,7 @@ Usage: node update_datawrapper_map.js CHART_ID MARKER_TO_REPLACE PATH_TO_GEOJSON
 project-structure/**analysis**
 
 ```
-jump-start use project-structure/analysis
+jump-start use @kevinschaul/project-structure/analysis
 ```
 
 Builds out the analysis portion of my ideal project structure. The structure looks like this:
@@ -159,7 +159,7 @@ xx_project_slug
 python/**project**
 
 ```
-jump-start use python/project
+jump-start use @kevinschaul/python/project
 ```
 
 A basic python project, using uv
@@ -168,7 +168,7 @@ A basic python project, using uv
 python/**pytest-evals-helpers**
 
 ```
-jump-start use python/pytest-evals-helpers
+jump-start use @kevinschaul/python/pytest-evals-helpers
 ```
 
 Given a bag of eval_results, generate metrics per prompt template, print
@@ -189,7 +189,7 @@ Template 3   200          81.00%     86.90%     73.00%     79.35%
 python/**script**
 
 ```
-jump-start use python/script
+jump-start use @kevinschaul/python/script
 ```
 
 A python script with argparse
@@ -200,7 +200,7 @@ A python script with argparse
 r/**round**
 
 ```
-jump-start use r/round
+jump-start use @kevinschaul/r/round
 ```
 
 Round with common behavior of rounding halves up
@@ -211,7 +211,7 @@ Round with common behavior of rounding halves up
 react/**useMediaQuery**
 
 ```
-jump-start use react/useMediaQuery
+jump-start use @kevinschaul/react/useMediaQuery
 ```
 
 Makes CSS media queries available in JS. Use like:
@@ -224,7 +224,7 @@ const isSkinny = useMediaQuery('(max-width: 600px)')
 react/**useViewportHeightUnits**
 
 ```
-jump-start use react/useViewportHeightUnits
+jump-start use @kevinschaul/react/useViewportHeightUnits
 ```
 
 Makes the newer CSS height units available in JS, like `lvh` and `svh`
@@ -239,7 +239,7 @@ https://github.com/joppuyo/large-small-dynamic-viewport-units-polyfill
 react-d3/**Chart**
 
 ```
-jump-start use react-d3/Chart
+jump-start use @kevinschaul/react-d3/Chart
 ```
 
 An empty React component for writing a responsive D3 chart.
@@ -251,7 +251,7 @@ An empty React component for writing a responsive D3 chart.
 react-d3/**LineChart**
 
 ```
-jump-start use react-d3/LineChart
+jump-start use @kevinschaul/react-d3/LineChart
 ```
 
 A React component for writing a responsive D3 line chart.
