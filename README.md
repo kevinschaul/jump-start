@@ -46,6 +46,7 @@ jump-start find react
 Jump to group:
 - [geo](#geo)
 - [github-actions](#github-actions)
+- [make](#make)
 - [node](#node)
 - [project-structure](#project-structure)
 - [python](#python)
@@ -91,6 +92,17 @@ jump-start use @kevinschaul/github-actions/node-release-please
 ```
 
 GitHub action for automating release PRs and npm releases with [release-please](https://github.com/googleapis/release-please-action)
+
+---
+### make
+
+make/**makefile-task-runner**
+
+```
+jump-start use @kevinschaul/make/makefile-task-runner
+```
+
+Makefile starter with a self-documenting "make help" command
 
 ---
 ### node
