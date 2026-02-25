@@ -241,6 +241,15 @@ Round with common behavior of rounding halves up
 ---
 ### react
 
+react/**Arrow**
+
+```
+jump-start use @kevinschaul/react/Arrow
+```
+
+A React component that draws a nice arrow
+
+---
 react/**useMediaQuery**
 
 ```
