@@ -1,0 +1,7 @@
+---
+description: |
+  A React component that draws a nice arrow
+defaultDir: .
+mainFile: Arrow.jsx
+preview:
+  template: react
