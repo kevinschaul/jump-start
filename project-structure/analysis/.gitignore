@@ -2,4 +2,3 @@ node_modules
 /observable/.observablehq/cache
 /observable/dist
 /data/build
-/data/clean

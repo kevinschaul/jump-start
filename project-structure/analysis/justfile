@@ -1,0 +1,17 @@
+help:
+    @just --list
+
+# Start observable framework
+dev:
+    npm run dev
+
+# Install dependencies
+install:
+    npm install
+    # Set up a symlink so that data also appears inside of observable/data
+    cd observable && ln -s ../data data
+
+# Run tests
+test:
+    npm run test
+
