@@ -1,50 +1,27 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
-# Prepare a release: check, build, test, bump the version, tag, push.
+# Usage: scripts/release [major|minor|patch]
 #
-#   scripts/release patch      (or minor, or major)
-#   scripts/release            (asks you which)
-#
-# Stops before publishing on purpose. Publishing is the one step that can't be
-# undone, so it stays in your hands -- the script ends by telling you the
-# command to run.
+# Checks git, runs tests, bumps the version, builds, tags and pushes. Stops short of publishing.
 
-# ---------------------------------------------------------------------------
-# EDIT THESE FOUR. VERSION in bump_cmd becomes the increment type you pass in.
-# ---------------------------------------------------------------------------
-
-build_cmd="npm run build"
-test_cmd="npm run test"
-bump_cmd="npm version VERSION"
-publish_cmd="npm run publish-npm"
-
-# Presets -- copy one set over the four above.
-#
-#   node:           build_cmd="npm run build"
-#                   test_cmd="npm run test"
-#                   bump_cmd="npm version VERSION"
-#                   publish_cmd="npm publish"
-#
-#   python (uv):    build_cmd="rm -rf dist && uv build"
-#                   test_cmd="uv run pytest"
-#                   bump_cmd="uv version --bump VERSION"
-#                   publish_cmd="uv publish"
-#
-#   nothing to build: build_cmd="true"
-#
-# bump_cmd is expected to commit the version change and create a tag, which is
-# what `npm version` and `uv version` both do. Make the tag annotated -- the
-# push below only carries annotated tags.
-#
-# Using just? One recipe wires it up:
-#
-#     release type="":
-#         @bash scripts/release {{ type }}
-
-# Exit immediately if a command exits with a non-zero status.
 set -euo pipefail
 
-# Work from the repository root, wherever this script happens to live.
+pkg_dir="."
+
+# Node (npm):
+test_cmd="npm run test"
+build_cmd="npm run build"
+bump_version_cmd="npm version VERSION --no-git-tag-version"
+version_cmd="node -p 'require(\"./package.json\").version'"
+publish_cmd="npm run publish"
+
+# Python (uv):
+#   test_cmd="uv run pytest"
+#   build_cmd="rm -rf dist && uv build"
+#   bump_version_cmd="uv version --bump VERSION"
+#   version_cmd="uv version --short"
+#   publish_cmd="uv publish"
+
 cd "$(git rev-parse --show-toplevel)"
 
 green_echo() {
@@ -53,16 +30,6 @@ green_echo() {
 
 red_echo() {
     echo -e "\033[0;31m$1\033[0m"
-}
-
-check_version_type() {
-    case "$1" in
-        major | minor | patch) ;;
-        *)
-            red_echo "Error: version increment must be major, minor or patch (got '$1')."
-            exit 1
-            ;;
-    esac
 }
 
 check_uncommitted_changes() {
@@ -100,39 +67,46 @@ version_type="${1:-}"
 if [ -z "$version_type" ]; then
     read -r -p "Enter version increment type (major/minor/patch): " version_type
 fi
-check_version_type "$version_type"
+case "$version_type" in
+    major | minor | patch) ;;
+    *)
+        red_echo "Error: version increment must be major, minor or patch (got '$version_type')."
+        exit 1
+        ;;
+esac
 
 green_echo "Starting release process..."
 
-# Step 1: Check for uncommitted changes
 green_echo "Step 1: Checking for uncommitted changes..."
 check_uncommitted_changes
 
-# Step 2: Check if git is synced
 green_echo "Step 2: Checking if git is synced with remote..."
 check_git_sync
 
-# Step 3: Run build
-green_echo "Step 3: Running build..."
-bash -eo pipefail -c "$build_cmd"
-green_echo "Build completed successfully."
-
-# Step 4: Run tests
-green_echo "Step 4: Running tests..."
+green_echo "Step 3: Running tests..."
 bash -eo pipefail -c "$test_cmd"
 green_echo "All tests passed successfully."
 
-# Step 5: Increment version and create git tag
-green_echo "Step 5: Incrementing version and creating git tag..."
-bash -eo pipefail -c "${bump_cmd//VERSION/$version_type}"
-green_echo "Version updated and git tag created."
+green_echo "Step 4: Incrementing version..."
+(cd "$pkg_dir" && bash -eo pipefail -c "${bump_version_cmd//VERSION/$version_type}" >/dev/null)
+tag="v$(cd "$pkg_dir" && bash -eo pipefail -c "$version_cmd")"
+green_echo "Version updated to $tag."
 
-# Step 6: Push the commit and the tag to remote
-green_echo "Step 6: Pushing to remote..."
-# --follow-tags, not --tags: `git push --tags` pushes the tag on its own and
-# leaves the version bump commit sitting on your machine.
+green_echo "Step 5: Running build..."
+if ! bash -eo pipefail -c "$build_cmd"; then
+    red_echo "Error: Build failed. Nothing was committed. Undo the version bump with: git checkout -- ."
+    exit 1
+fi
+green_echo "Build completed successfully."
+
+green_echo "Step 6: Creating commit and git tag..."
+git commit -am "${tag#v}"
+git tag -a "$tag" -m "${tag#v}"
+green_echo "Commit and tag $tag created."
+
+green_echo "Step 7: Pushing to remote..."
 git push --follow-tags
-green_echo "Commit and tag pushed successfully."
+green_echo "Pushed successfully."
 
 green_echo "Release preparation completed successfully!"
 green_echo "To publish, run '$publish_cmd'"
