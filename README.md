@@ -45,9 +45,9 @@ jump-start find react
 
 Jump to group:
 - [geo](#geo)
-- [github-actions](#github-actions)
 - [make](#make)
 - [node](#node)
+- [project-maintenance](#project-maintenance)
 - [project-structure](#project-structure)
 - [python](#python)
 - [r](#r)
@@ -81,17 +81,6 @@ jump-start use @kevinschaul/geo/pmtiles-counties
 ```
 
 A demo Makefile for creating map tiles at the county level
-
----
-### github-actions
-
-github-actions/**node-release-please**
-
-```
-jump-start use @kevinschaul/github-actions/node-release-please
-```
-
-GitHub action for automating release PRs and npm releases with [release-please](https://github.com/googleapis/release-please-action)
 
 ---
 ### make
@@ -156,6 +145,24 @@ Downloads the current map info, replaces the specified marker with a geojson fil
 
 Usage: node update_datawrapper_map.js CHART_ID MARKER_TO_REPLACE PATH_TO_GEOJSON
 
+---
+### project-maintenance
+
+project-maintenance/**github-action-test**
+
+```
+jump-start use @kevinschaul/project-maintenance/github-action-test
+```
+
+TODO
+---
+project-maintenance/**release**
+
+```
+jump-start use @kevinschaul/project-maintenance/release
+```
+
+TODO
 ---
 ### project-structure
 
