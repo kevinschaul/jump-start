@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+#
+# Prepare a release: check, build, test, bump the version, tag, push.
+#
+#   just release patch      (or minor, or major)
+#   just release            (asks you which)
+#
+# Stops before publishing on purpose. Publishing is the one step that can't be
+# undone, so it stays in your hands -- the script ends by telling you the
+# command to run.
+
+# ---------------------------------------------------------------------------
+# EDIT THESE FOUR. VERSION in bump_cmd becomes the increment type you pass in.
+# ---------------------------------------------------------------------------
+
+build_cmd="npm run build"
+test_cmd="npm run test"
+bump_cmd="npm version VERSION"
+publish_cmd="npm run publish-npm"
+
+# Presets -- copy one set over the four above.
+#
+#   node:           build_cmd="npm run build"
+#                   test_cmd="npm run test"
+#                   bump_cmd="npm version VERSION"
+#                   publish_cmd="npm publish"
+#
+#   python (uv):    build_cmd="rm -rf dist && uv build"
+#                   test_cmd="uv run pytest"
+#                   bump_cmd="uv version --bump VERSION"
+#                   publish_cmd="uv publish"
+#
+#   nothing to build: build_cmd="true"
+#
+# bump_cmd is expected to commit the version change and create a tag, which is
+# what `npm version` and `uv version` both do. Make the tag annotated -- the
+# push below only carries annotated tags.
+
+# Exit immediately if a command exits with a non-zero status.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+green_echo() {
+    echo -e "\033[0;32m$1\033[0m"
+}
+
+red_echo() {
+    echo -e "\033[0;31m$1\033[0m"
+}
+
+check_version_type() {
+    case "$1" in
+        major | minor | patch) ;;
+        *)
+            red_echo "Error: version increment must be major, minor or patch (got '$1')."
+            exit 1
+            ;;
+    esac
+}
+
+check_uncommitted_changes() {
+    if [[ $(git status --porcelain) ]]; then
+        red_echo "Error: There are uncommitted changes in your working directory."
+        red_echo "Please commit or stash these changes before releasing."
+        git status
+        exit 1
+    else
+        green_echo "Working directory is clean."
+    fi
+}
+
+check_git_sync() {
+    git remote update
+    LOCAL=$(git rev-parse @)
+    REMOTE=$(git rev-parse '@{u}')
+    BASE=$(git merge-base @ '@{u}')
+
+    if [ "$LOCAL" = "$REMOTE" ]; then
+        green_echo "Git is up to date with remote."
+    elif [ "$LOCAL" = "$BASE" ]; then
+        red_echo "Error: Your local branch is behind the remote branch. Please pull the latest changes."
+        exit 1
+    elif [ "$REMOTE" = "$BASE" ]; then
+        red_echo "Error: Your local branch is ahead of the remote branch. Please push your changes."
+        exit 1
+    else
+        red_echo "Error: Your local and remote branches have diverged. Please resolve conflicts before releasing."
+        exit 1
+    fi
+}
+
+version_type="${1:-}"
+if [ -z "$version_type" ]; then
+    read -r -p "Enter version increment type (major/minor/patch): " version_type
+fi
+check_version_type "$version_type"
+
+green_echo "Starting release process..."
+
+# Step 1: Check for uncommitted changes
+green_echo "Step 1: Checking for uncommitted changes..."
+check_uncommitted_changes
+
+# Step 2: Check if git is synced
+green_echo "Step 2: Checking if git is synced with remote..."
+check_git_sync
+
+# Step 3: Run build
+green_echo "Step 3: Running build..."
+bash -eo pipefail -c "$build_cmd"
+green_echo "Build completed successfully."
+
+# Step 4: Run tests
+green_echo "Step 4: Running tests..."
+bash -eo pipefail -c "$test_cmd"
+green_echo "All tests passed successfully."
+
+# Step 5: Increment version and create git tag
+green_echo "Step 5: Incrementing version and creating git tag..."
+bash -eo pipefail -c "${bump_cmd//VERSION/$version_type}"
+green_echo "Version updated and git tag created."
+
+# Step 6: Push the commit and the tag to remote
+green_echo "Step 6: Pushing to remote..."
+# --follow-tags, not --tags: `git push --tags` pushes the tag on its own and
+# leaves the version bump commit sitting on your machine.
+git push --follow-tags
+green_echo "Commit and tag pushed successfully."
+
+green_echo "Release preparation completed successfully!"
+green_echo "To publish, run '$publish_cmd'"

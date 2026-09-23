@@ -1,14 +1,9 @@
+# Release recipes. Everything — the commands to edit, the docs — is in
+# scripts/release.
+
 help:
     @just --list
 
-# Test, bump, tag, publish, push, and create the GitHub release.
-release version:
-    @python3 scripts/release.py release {{ quote(version) }}
-
-# Push and create the GitHub release for a published VERSION. Safe to rerun.
-release-finish version:
-    @python3 scripts/release.py finish {{ quote(version) }}
-
-# Undo a release that never left this machine: drop the tag and release commit.
-unrelease version:
-    @python3 scripts/release.py unrelease {{ quote(version) }}
+# Prepare a release. TYPE is major, minor or patch; you'll be asked if you omit it.
+release type="":
+    @bash scripts/release {{ quote(type) }}
