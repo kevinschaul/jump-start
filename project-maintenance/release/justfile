@@ -1,6 +1,3 @@
-# Release recipes. Everything — the commands to edit, the docs — is in
-# scripts/release.py.
-
 help:
     @just --list
 
