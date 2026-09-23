@@ -1,0 +1,227 @@
+#!/usr/bin/env bash
+# The release flow for the release starter. bash + git + gh only.
+#
+#   scripts/release guard VERSION      check that VERSION can be released
+#   scripts/release release VERSION    test, bump, tag, publish, push, release
+#   scripts/release finish VERSION     push and create the GitHub release
+#   scripts/release unrelease VERSION  undo a release that never left this machine
+#
+# The justfile sets TEST_CMD, BUMP_CMD and PUBLISH_CMD. VERSION in BUMP_CMD is
+# replaced with the version being released.
+#
+# Decisions:
+#   - Releases run from main only. No dev/main promotion.
+#   - No prereleases.
+#   - Projects that ship nothing: publish-cmd := "true"
+#   - Protected org repos: don't use this starter; release through CI.
+#   - Credentials: each ecosystem's native login (npm login; uv/PyPI token in
+#     keyring or env). Never commit tokens.
+#   - Tags are "v"-prefixed. To namespace (e.g. lib-v*), change tag_of below.
+#   - The guard and `git commit -am` depend on each other. Don't remove the
+#     clean-tree check.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+fail() { echo "error: $*" >&2; exit 1; }
+warn() { echo "warning: $*" >&2; }
+
+tag_of() { echo "v$1"; }
+
+usage() {
+  echo "usage: scripts/release guard | release | finish | unrelease VERSION" >&2
+  exit 2
+}
+
+# True if $1 > $2, both MAJOR.MINOR.PATCH. Numeric, so 0.10.0 > 0.9.0.
+version_gt() {
+  local a1 a2 a3 b1 b2 b3
+  IFS=. read -r a1 a2 a3 <<< "$1"
+  IFS=. read -r b1 b2 b3 <<< "$2"
+  a1=$((10#$a1)); a2=$((10#$a2)); a3=$((10#$a3))
+  b1=$((10#$b1)); b2=$((10#$b2)); b3=$((10#$b3))
+  [ "$a1" -ne "$b1" ] && { [ "$a1" -gt "$b1" ]; return; }
+  [ "$a2" -ne "$b2" ] && { [ "$a2" -gt "$b2" ]; return; }
+  [ "$a3" -gt "$b3" ]
+}
+
+# Check that VERSION can be released. Changes nothing.
+cmd_guard() {
+  local version="$1" tag last semver branch remote_tag pr_rules protected
+  tag=$(tag_of "$version")
+
+  # 1. Version format
+  semver='^[0-9]+\.[0-9]+\.[0-9]+$'
+  [[ "$version" =~ $semver ]] || fail 'Version must look like 1.2.3 (no "v" prefix).'
+
+  # 2. Tools
+  command -v git > /dev/null || fail "git not found — install it: https://git-scm.com"
+  command -v gh > /dev/null || fail "gh not found — install it: https://cli.github.com"
+
+  # 3. Branch
+  branch=$(git branch --show-current)
+  [ "$branch" = main ] || fail "Releases run from main (you're on ${branch:-a detached HEAD}) — git switch main"
+
+  # 4. Clean tree, untracked files included (release relies on this for `git commit -am`)
+  [ -z "$(git status --porcelain)" ] || fail "Working tree not clean — commit or stash first. git status"
+
+  # 5. Changelog notes
+  bash scripts/changelog check || exit 1
+
+  # 6. Version goes up. No tags yet means this is the first release.
+  last=$(git tag --list 'v*' --sort=-v:refname | awk '/^v[0-9]+\.[0-9]+\.[0-9]+$/ && !found { print substr($0, 2); found = 1 }')
+  if [ -n "$last" ]; then
+    if [ "$version" = "$last" ]; then
+      fail "Tag $tag already exists locally — pick a new version, or git tag -d $tag if it's stale."
+    fi
+    version_gt "$version" "$last" || fail "$version must be greater than the last release ($last)."
+  fi
+
+  # 7. Tag is new locally
+  if git rev-parse -q --verify "refs/tags/$tag" > /dev/null; then
+    fail "Tag $tag already exists locally — pick a new version, or git tag -d $tag if it's stale."
+  fi
+
+  # 8. In sync with origin (--no-tags: the guard doesn't create local tags)
+  git fetch --quiet --no-tags origin main || fail "Couldn't fetch from origin — check your network and remote, then rerun."
+  [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] || fail "Not in sync with origin/main — git pull (or push your commits first)."
+
+  # 9. Tag is new on origin
+  remote_tag=$(git ls-remote --tags origin "refs/tags/$tag") || fail "Couldn't list tags on origin — check your network and remote, then rerun."
+  [ -z "$remote_tag" ] || fail "Tag $tag already exists on origin — pick a new version."
+
+  # 10. gh can create the GitHub release
+  gh auth status > /dev/null 2>&1 || fail "gh is not authenticated — gh auth login"
+
+  # 11. Branch protection. Best effort: an unreachable API never blocks a release.
+  if pr_rules=$(gh api 'repos/{owner}/{repo}/rules/branches/main' --jq '[.[] | select(.type=="pull_request")] | length' 2> /dev/null); then
+    if [[ "$pr_rules" =~ ^[1-9] ]]; then
+      fail "main requires pull requests — this starter can't push there. Protected repos should release through CI."
+    fi
+  else
+    warn "Couldn't check main's rulesets on GitHub — continuing."
+  fi
+  if protected=$(gh api 'repos/{owner}/{repo}/branches/main' --jq .protected 2> /dev/null); then
+    if [ "$protected" = true ]; then
+      warn "main has classic branch protection — if it requires reviews, the push will be rejected after publishing. Ctrl-C now if so."
+    fi
+  else
+    warn "Couldn't check main's branch protection on GitHub — continuing."
+  fi
+
+  echo "Ready to release $version${last:+ (last release: $last)}"
+}
+
+# Test, bump, tag, publish, push, and create the GitHub release.
+cmd_release() {
+  local version="$1" tag bump var
+  tag=$(tag_of "$version")
+
+  # For failures after bump: the guard proved the tree was clean, so
+  # discarding every change is safe.
+  fail_dirty() {
+    local undo="git checkout -- ."
+    if [ -n "$(git ls-files --others --exclude-standard)" ]; then
+      undo="$undo && git clean -fd"
+    fi
+    if [ -n "$(git status --porcelain)" ]; then
+      fail "$* Nothing is committed. Undo with: $undo"
+    fi
+    fail "$* Nothing changed."
+  }
+
+  for var in TEST_CMD BUMP_CMD PUBLISH_CMD; do
+    [ -n "${!var:-}" ] || fail "$var is not set — run this through the justfile: just release $version"
+  done
+
+  cmd_guard "$version"
+
+  echo "==> Testing"
+  bash -eo pipefail -c "$TEST_CMD" \
+    || fail_dirty "Tests failed. Fix them, then rerun: just release $version"
+
+  echo "==> Bumping to $version"
+  bump=${BUMP_CMD//VERSION/$version}
+  bash -eo pipefail -c "$bump" || fail_dirty "Bump failed."
+
+  echo "==> Updating CHANGELOG.md"
+  bash scripts/changelog rotate "$version" || fail_dirty "Changelog update failed."
+
+  echo "==> Committing and tagging $tag"
+  git commit --quiet -am "Release $version" || fail_dirty "Commit failed."
+  git tag -a "$tag" -m "$tag" || fail "Tagging failed. Undo the release commit with: git reset --keep HEAD~1"
+
+  # Point of no return: once publish succeeds, never roll back. Finish forward.
+  echo "==> Publishing"
+  if ! bash -eo pipefail -c "$PUBLISH_CMD"; then
+    fail "Publish failed — nothing has left your machine. Undo with: just unrelease $version"
+  fi
+
+  # Subshell: cmd_finish exits on failure, and that must not skip the message
+  # below — after a successful publish the only way out is forward.
+  if ! (cmd_finish "$version"); then
+    fail "Published $version but didn't finish. Fix the problem above, then run: just release-finish $version"
+  fi
+}
+
+# Push and create the GitHub release for a published VERSION. Safe to rerun.
+cmd_finish() {
+  local version="$1" tag branch notes url
+  tag=$(tag_of "$version")
+
+  git rev-parse -q --verify "refs/tags/$tag" > /dev/null || fail "No local tag $tag — nothing to finish."
+  branch=$(git branch --show-current)
+  [ "$branch" = main ] || fail "release-finish pushes main (you're on ${branch:-a detached HEAD}) — git switch main, then rerun: just release-finish $version"
+  git merge-base --is-ancestor "$tag^{commit}" HEAD \
+    || fail "HEAD doesn't contain $tag, so pushing main wouldn't publish it. Get main back to (or after) $tag, then rerun: just release-finish $version"
+
+  echo "==> Pushing main and $tag"
+  git push origin main --follow-tags \
+    || fail "Push failed. Fix the problem above, then rerun: just release-finish $version"
+
+  if gh release view "$tag" > /dev/null 2>&1; then
+    echo "GitHub release $tag already exists"
+  else
+    echo "==> Creating GitHub release $tag"
+    notes=$(bash scripts/changelog notes "$version") || fail "Couldn't read notes for $version from CHANGELOG.md."
+    # Notes go in over stdin, so nothing depends on a tempfile surviving.
+    printf '%s\n' "$notes" \
+      | gh release create "$tag" --verify-tag --title "$tag" --notes-file - > /dev/null \
+      || fail "Couldn't create the GitHub release. Fix the problem above, then rerun: just release-finish $version"
+  fi
+
+  url=$(gh release view "$tag" --json url --jq .url 2> /dev/null || true)
+  echo "Released $version${url:+ — $url}"
+}
+
+# Undo a release that never left this machine: drop the tag and release commit.
+cmd_unrelease() {
+  local version="$1" tag remote_tag
+  tag=$(tag_of "$version")
+
+  git rev-parse -q --verify "refs/tags/$tag" > /dev/null \
+    || fail "No local tag $tag — nothing to unrelease. If files were left modified, undo with: git checkout -- ."
+
+  remote_tag=$(git ls-remote --tags origin "refs/tags/$tag") || fail "Couldn't check origin for $tag — check your network and remote, then rerun."
+  [ -z "$remote_tag" ] || fail "$tag is already on origin — it's public. Release forward with a new version instead."
+
+  [ "$(git rev-parse HEAD)" = "$(git rev-parse "$tag^{commit}")" ] \
+    || fail "HEAD isn't the $tag release commit. Undo by hand: git tag -d $tag, then remove the \"Release $version\" commit."
+  [ "$(git log -1 --format=%s)" = "Release $version" ] \
+    || fail "HEAD isn't a \"Release $version\" commit. Undo by hand: git tag -d $tag"
+
+  # --keep refuses rather than discard uncommitted changes.
+  git reset --quiet --keep HEAD~1 \
+    || fail "Couldn't remove the release commit without losing local changes — stash them, then rerun: just unrelease $version"
+  git tag -d "$tag" > /dev/null
+  echo "Unreleased $version: deleted $tag and the release commit."
+}
+
+[ $# -eq 2 ] || usage
+case "$1" in
+  guard)     cmd_guard "$2" ;;
+  release)   cmd_release "$2" ;;
+  finish)    cmd_finish "$2" ;;
+  unrelease) cmd_unrelease "$2" ;;
+  *) usage ;;
+esac

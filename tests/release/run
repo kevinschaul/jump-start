@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 # Tests for the release starter: scripts/changelog, then the whole release flow.
 #
-#   tests/run
+#   tests/release/run
+#
+# Lives outside project-maintenance/release/ on purpose: jump-start copies a
+# starter directory wholesale, and these tests have no business in the projects
+# that use the starter.
 #
 # Plain bash. Each case builds a throwaway bare "origin" and working clone
 # under mktemp -d, with the three commands set to harmless ones and a stub gh
 # on PATH, so nothing touches a real registry or GitHub. Needs git and just.
 set -euo pipefail
 
-STARTER=$(cd "$(dirname "$0")/.." && pwd)
+STARTER=$(cd "$(dirname "$0")/../../project-maintenance/release" && pwd)
 ROOT=$(mktemp -d "${TMPDIR:-/tmp}/release-tests.XXXXXX")
 trap 'rm -rf "$ROOT"' EXIT
 
@@ -106,7 +110,11 @@ case "$1" in
           shift
         done
         [ -n "$notes" ] || { echo "stub gh: --notes-file required" >&2; exit 1; }
-        cp "$notes" "$GH_STATE/releases/$tag"
+        if [ "$notes" = - ]; then
+          cat > "$GH_STATE/releases/$tag"
+        else
+          cp "$notes" "$GH_STATE/releases/$tag"
+        fi
         ;;
       *) echo "stub gh: unexpected release call: $*" >&2; exit 1 ;;
     esac
@@ -508,12 +516,27 @@ else
   check "says how to install" output_has "gh not found — install it: https://cli.github.com"
 fi
 
-section "just --dry-run release 1.2.3"
+section "justfile is a thin entrypoint over scripts/release"
 cd "$STARTER"
 run just --dry-run release 1.2.3
 check "exits 0" status_is 0
-check "expands the version" output_has "version='1.2.3'"
-check "expands bump-cmd" output_has "npm version 1.2.3 --no-git-tag-version"
+check "hands off to the script" output_has "bash scripts/release release '1.2.3'"
+run just --evaluate
+check "exits 0" status_is 0
+for v in TEST_CMD BUMP_CMD PUBLISH_CMD; do
+  check "$v is exported" output_has "$v "
+done
+check "BUMP_CMD carries the VERSION placeholder" output_has '"npm version VERSION --no-git-tag-version"'
+
+section "scripts/release without the justfile's environment"
+new_project bare-env
+run env -u TEST_CMD -u BUMP_CMD -u PUBLISH_CMD bash scripts/release release 0.1.0
+check "exits 1" status_is 1
+check "points at the justfile" output_has "TEST_CMD is not set — run this through the justfile: just release 0.1.0"
+check "didn't run the guard" not output_has "Ready to release"
+run bash scripts/release bogus 0.1.0
+check "unknown subcommand exits 2" status_is 2
+check "unknown subcommand prints usage" output_has "usage: scripts/release"
 
 echo
 echo "$passed passed, $failed failed"

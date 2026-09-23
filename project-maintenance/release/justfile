@@ -1,0 +1,57 @@
+# Release starter
+#
+# Usage:     just release 1.2.3
+#   Format:  MAJOR.MINOR.PATCH, no "v" (the tag adds it)
+#   Bump:    breaking change → major · new feature → minor · fix → patch
+#            Before 1.0: breaking change → minor
+#   First:   0.1.0
+#
+# Before releasing, add notes under "## Unreleased" in CHANGELOG.md.
+#
+# If something fails:
+#   before publish → just unrelease 1.2.3   (nothing left your machine)
+#   after publish  → just release-finish 1.2.3   (never roll back a published version)
+#
+# The flow itself lives in scripts/release, which also lists the decisions
+# behind it. These recipes are just entrypoints.
+
+# Presets — copy one set over the three commands below.
+#
+#   node:
+#     test-cmd    := "npm test"
+#     bump-cmd    := "npm version VERSION --no-git-tag-version"
+#     publish-cmd := "npm publish"
+#
+#   python (uv):
+#     test-cmd    := "uv run pytest"
+#     bump-cmd    := "uv version VERSION"
+#     publish-cmd := "rm -rf dist && uv build && uv publish"
+
+# The three commands to edit per project. VERSION in bump-cmd is replaced with
+# the version being released.
+test-cmd := "npm test"
+bump-cmd := "npm version VERSION --no-git-tag-version"
+publish-cmd := "npm publish"
+
+export TEST_CMD := test-cmd
+export BUMP_CMD := bump-cmd
+export PUBLISH_CMD := publish-cmd
+
+help:
+    @just --list
+
+# Check that VERSION can be released. Changes nothing.
+guard version:
+    @bash scripts/release guard {{ quote(version) }}
+
+# Test, bump, tag, publish, push, and create the GitHub release.
+release version:
+    @bash scripts/release release {{ quote(version) }}
+
+# Push and create the GitHub release for a published VERSION. Safe to rerun.
+release-finish version:
+    @bash scripts/release finish {{ quote(version) }}
+
+# Undo a release that never left this machine: drop the tag and release commit.
+unrelease version:
+    @bash scripts/release unrelease {{ quote(version) }}
