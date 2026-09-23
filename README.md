@@ -162,7 +162,12 @@ project-maintenance/**release**
 jump-start use @kevinschaul/project-maintenance/release
 ```
 
-TODO
+A shell script for releasing software, so I don't have to figure out a new process for every repo I make.
+
+Usage: scripts/release [major|minor|patch]
+
+Checks git, runs tests, bumps the version, builds, tags and pushes. Stops short of publishing.
+
 ---
 ### project-structure
 
