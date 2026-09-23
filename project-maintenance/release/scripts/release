@@ -2,8 +2,8 @@
 #
 # Prepare a release: check, build, test, bump the version, tag, push.
 #
-#   just release patch      (or minor, or major)
-#   just release            (asks you which)
+#   scripts/release patch      (or minor, or major)
+#   scripts/release            (asks you which)
 #
 # Stops before publishing on purpose. Publishing is the one step that can't be
 # undone, so it stays in your hands -- the script ends by telling you the
@@ -35,11 +35,17 @@ publish_cmd="npm run publish-npm"
 # bump_cmd is expected to commit the version change and create a tag, which is
 # what `npm version` and `uv version` both do. Make the tag annotated -- the
 # push below only carries annotated tags.
+#
+# Using just? One recipe wires it up:
+#
+#     release type="":
+#         @bash scripts/release {{ type }}
 
 # Exit immediately if a command exits with a non-zero status.
 set -euo pipefail
 
-cd "$(dirname "$0")/.."
+# Work from the repository root, wherever this script happens to live.
+cd "$(git rev-parse --show-toplevel)"
 
 green_echo() {
     echo -e "\033[0;32m$1\033[0m"
