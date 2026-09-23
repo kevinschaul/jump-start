@@ -1,0 +1,8 @@
+---
+description: |
+  GitHub Actions workflows that run tests on every pull request and on pushes
+  to main. No secrets. Keep the one for your ecosystem and delete the other:
+
+  - `node.yml`: Node 22 and 24, `npm ci` then `npm test`
+  - `python.yml`: Python 3.10–3.14 with uv, `uv run pytest`
+defaultDir: .github/workflows

@@ -1,0 +1,26 @@
+name: test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      # Let every version finish, so one failure doesn't hide the others.
+      fail-fast: false
+      matrix:
+        # 3.10 reaches end of life in October 2026; drop it then.
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+      # setup-uv no longer publishes floating major tags (v7 was the last), so
+      # pin a full version.
+      - uses: astral-sh/setup-uv@v10.2.0
+      - run: uv run --python ${{ matrix.python }} pytest
