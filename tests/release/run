@@ -1,19 +1,45 @@
 #!/usr/bin/env bash
-# Tests for the release starter: scripts/changelog, then the whole release flow.
+# Tests for the release starter: changelog handling, then the whole release
+# flow.
 #
 #   tests/release/run
 #
-# Lives outside project-maintenance/release/ on purpose: jump-start copies a
-# starter directory wholesale, and these tests have no business in the projects
-# that use the starter.
+# Runs the entire suite against both implementations -- project-maintenance/
+# release (bash) and project-maintenance/release-python -- so the two can be
+# compared on readability alone. Any behavior difference between them shows up
+# here as a failing check.
+#
+# Lives outside the starter directories on purpose: jump-start copies a starter
+# wholesale, and these tests have no business in the projects that use it.
 #
 # Plain bash. Each case builds a throwaway bare "origin" and working clone
 # under mktemp -d, with the three commands set to harmless ones and a stub gh
 # on PATH, so nothing touches a real registry or GitHub. Needs git and just.
 set -euo pipefail
 
-STARTER=$(cd "$(dirname "$0")/../../project-maintenance/release" && pwd)
-RELEASE="$STARTER/scripts/release"
+HERE=$(cd "$(dirname "$0")" && pwd)
+
+# use_impl NAME: point the suite at one of the two starters.
+use_impl() {
+  IMPL="$1"
+  case "$IMPL" in
+    bash)
+      STARTER=$(cd "$HERE/../../project-maintenance/release" && pwd)
+      SCRIPT="scripts/release"
+      ENTRY="bash scripts/release"
+      ASSIGN="="
+      ;;
+    python)
+      STARTER=$(cd "$HERE/../../project-maintenance/release-python" && pwd)
+      SCRIPT="scripts/release.py"
+      ENTRY="python3 scripts/release.py"
+      ASSIGN=" = "
+      ;;
+    *) echo "unknown implementation: $IMPL" >&2; exit 1 ;;
+  esac
+  RELEASE="$STARTER/$SCRIPT"
+}
+
 ROOT=$(mktemp -d "${TMPDIR:-/tmp}/release-tests.XXXXXX")
 trap 'rm -rf "$ROOT"' EXIT
 
@@ -55,6 +81,17 @@ check() {
     failed=$((failed + 1))
     echo "    FAIL: $desc"
     printf '%s\n' "${out:-}" | sed 's/^/      | /'
+  fi
+}
+
+# cl FUNC [ARG...]: load the release script without running it and call FUNC.
+# For bash, $0 differs from the sourced path so the dispatcher stays put; for
+# python, __name__ is not "__main__".
+cl() {
+  if [ "$IMPL" = bash ]; then
+    bash -c '. "$1"; shift; "$@"' sourced-by-tests "$RELEASE" "$@"
+  else
+    python3 "$ROOT/bin/clrun.py" "$RELEASE" "$@"
   fi
 }
 
@@ -126,11 +163,31 @@ STUB
 chmod +x "$ROOT/bin/gh"
 export PATH="$ROOT/bin:$PATH"
 
+# Loads release.py as a module and calls one function, turning Fail into the
+# same stderr-plus-exit-1 the bash helpers produce.
+cat > "$ROOT/bin/clrun.py" << 'CLRUN'
+import importlib.util
+import sys
+
+sys.dont_write_bytecode = True
+path, func, *args = sys.argv[1:]
+spec = importlib.util.spec_from_file_location("release_under_test", path)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+try:
+    result = getattr(module, func)(*args)
+except module.Fail as e:
+    print(e, file=sys.stderr)
+    sys.exit(1)
+if result is not None:
+    print(result)
+CLRUN
+
 # new_project NAME [TEST_CMD] [BUMP_CMD] [PUBLISH_CMD]
 # Creates origin + working clone with the starter committed and pushed, cds
 # into the clone, and sets $W (clone), $O (bare origin), $GH_STATE.
 new_project() {
-  local dir="$ROOT/cases/$1"
+  local dir="$ROOT/cases/$IMPL/$1"
   local test_cmd="${2:-true}"
   local bump_cmd="${3:-echo VERSION > version.txt}"
   local publish_cmd="${4:-true}"
@@ -140,16 +197,16 @@ new_project() {
   git init --quiet --bare "$O"
   git clone --quiet "$O" "$W" 2> /dev/null
   cp "$STARTER/justfile" "$STARTER/CHANGELOG.md" "$W/"
-  # The three commands now live at the top of scripts/release, so that's what
+  # The three commands live at the top of the release script, so that's what
   # gets rewritten per case.
   mkdir -p "$W/scripts"
-  awk -v t="$test_cmd" -v b="$bump_cmd" -v p="$publish_cmd" '
-    /^test_cmd=/    { print "test_cmd=\"" t "\""; next }
-    /^bump_cmd=/    { print "bump_cmd=\"" b "\""; next }
-    /^publish_cmd=/ { print "publish_cmd=\"" p "\""; next }
+  awk -v t="$test_cmd" -v b="$bump_cmd" -v p="$publish_cmd" -v a="$ASSIGN" '
+    /^test_cmd *=/    { print "test_cmd" a "\"" t "\""; next }
+    /^bump_cmd *=/    { print "bump_cmd" a "\"" b "\""; next }
+    /^publish_cmd *=/ { print "publish_cmd" a "\"" p "\""; next }
     { print }
-  ' "$STARTER/scripts/release" > "$W/scripts/release"
-  chmod +x "$W/scripts/release"
+  ' "$RELEASE" > "$W/$SCRIPT"
+  chmod +x "$W/$SCRIPT"
   echo 0.0.0 > "$W/version.txt"
 
   export GH_STATE="$dir/gh"
@@ -202,19 +259,15 @@ unchanged() {
 
 # --- Changelog handling ------------------------------------------------------
 #
-# The changelog functions live inside scripts/release, which dispatches only
-# when executed. Sourcing it defines the functions and nothing else, so each
-# case below runs one of them directly.
+# Both scripts keep their changelog functions private and dispatch only when
+# executed, so each case below loads the file without running it and calls one
+# function by name. Same function names, same messages, either way.
+
+changelog_tests() {
 
 cl_dir="$ROOT/changelog"
 mkdir -p "$cl_dir"
 export CHANGELOG="$cl_dir/CHANGELOG.md"
-
-# cl FUNC [ARG...]: source scripts/release in a fresh shell and call FUNC.
-# $0 differs from the sourced path, so the dispatcher at the bottom stays put.
-cl() {
-  bash -c '. "$1"; shift; "$@"' sourced-by-tests "$RELEASE" "$@"
-}
 
 section "changelog check: has notes"
 printf '# Changelog\n\n## Unreleased\n\n- Added a thing\n\n## 0.1.0 - 2026-01-01\n\n- Old\n' > "$CHANGELOG"
@@ -291,10 +344,20 @@ run cl cl_notes 0.1.0
 check "last section" [ "$out" = "- Zero" ]
 run cl cl_notes 0.2.0
 check "missing version exits 1" status_is 1
+# Compared as files: command substitution eats trailing newlines, so $out
+# can't tell trimmed notes from untrimmed ones.
+cl cl_notes 0.1.1 > "$cl_dir/notes.out"
+printf -- '- One\n\n- Uno\n' > "$cl_dir/notes.want"
+check "notes are byte-for-byte, blank lines trimmed off both ends" \
+  same_file "$cl_dir/notes.out" "$cl_dir/notes.want"
 
 unset CHANGELOG
 
+}
+
 # --- Release flow ------------------------------------------------------------
+
+flow_tests() {
 
 section "happy path: first release 0.1.0, then 0.1.1"
 new_project happy
@@ -385,8 +448,8 @@ check "says what to do" output_has "Releases run from main (you're on feature) â
 section "out of sync with origin"
 new_project sync
 add_note "Something"
-git clone --quiet "$O" "$ROOT/cases/sync/other"
-(cd "$ROOT/cases/sync/other" && echo x > other.txt && git add other.txt && git commit --quiet -m other && git push --quiet origin main 2> /dev/null)
+git clone --quiet "$O" "$ROOT/cases/$IMPL/sync/other"
+(cd "$ROOT/cases/$IMPL/sync/other" && echo x > other.txt && git add other.txt && git commit --quiet -m other && git push --quiet origin main 2> /dev/null)
 snapshot
 run just release 0.1.0
 check "behind fails" status_is 1
@@ -406,8 +469,8 @@ run just release 0.1.0
 check "local tag fails" status_is 1
 check "local tag says what to do" output_has "Tag v0.1.0 already exists locally â€” pick a new version, or git tag -d v0.1.0 if it's stale."
 git tag -d v0.1.0 > /dev/null
-git clone --quiet "$O" "$ROOT/cases/tags/other"
-(cd "$ROOT/cases/tags/other" && git tag -a v0.1.0 -m v0.1.0 && git push --quiet origin v0.1.0 2> /dev/null)
+git clone --quiet "$O" "$ROOT/cases/$IMPL/tags/other"
+(cd "$ROOT/cases/$IMPL/tags/other" && git tag -a v0.1.0 -m v0.1.0 && git push --quiet origin v0.1.0 2> /dev/null)
 snapshot
 run just release 0.1.0
 check "origin tag fails" status_is 1
@@ -464,7 +527,8 @@ printf '#!/bin/sh\necho "rejected by test hook" >&2\nexit 1\n' > "$O/hooks/pre-r
 chmod +x "$O/hooks/pre-receive"
 run just release 0.1.0
 check "exits 1" status_is 1
-check "names release-finish" output_has "Published 0.1.0 but didn't finish. Fix the problem above, then run: just release-finish 0.1.0"
+check "says the publish stuck" output_has "==> Published 0.1.0. There is no going back now, only forward."
+check "names release-finish" output_has "Push failed. Fix the problem above, then rerun: just release-finish 0.1.0"
 check "tag not on origin" not tag_on_origin v0.1.0
 check "no GitHub release" not gh_release v0.1.0
 rm "$O/hooks/pre-receive"
@@ -522,6 +586,7 @@ add_note "Something"
 mkdir -p "$ROOT/nogh"
 ln -sf "$(command -v just)" "$ROOT/nogh/just"
 ln -sf "$(command -v git)" "$ROOT/nogh/git"
+ln -sf "$(command -v python3)" "$ROOT/nogh/python3"
 if PATH="/usr/bin:/bin" command -v gh > /dev/null; then
   echo "    (skipped: gh is installed in /usr/bin or /bin)"
 else
@@ -534,11 +599,11 @@ section "the starter is a justfile, a script and a changelog"
 run find "$STARTER" -type f -not -name jump-start.yaml
 check "exits 0" status_is 0
 check "three files" [ "$(printf '%s\n' "$out" | wc -l | tr -d ' ')" = 3 ]
-for f in justfile scripts/release CHANGELOG.md; do
+for f in justfile "$SCRIPT" CHANGELOG.md; do
   check "ships $f" [ -f "$STARTER/$f" ]
 done
 
-section "justfile is a thin entrypoint over scripts/release"
+section "justfile is a thin entrypoint over $SCRIPT"
 cd "$STARTER"
 run just --list
 check "exits 0" status_is 0
@@ -547,33 +612,43 @@ check "offers release-finish" output_has "release-finish version"
 check "offers unrelease" output_has "unrelease version"
 check "no guard recipe" not output_has "guard"
 run just --dry-run release 1.2.3
-check "release hands off" output_has "bash scripts/release release '1.2.3'"
+check "release hands off" output_has "$ENTRY release '1.2.3'"
 run just --dry-run release-finish 1.2.3
-check "release-finish hands off" output_has "bash scripts/release finish '1.2.3'"
+check "release-finish hands off" output_has "$ENTRY finish '1.2.3'"
 run just --dry-run unrelease 1.2.3
-check "unrelease hands off" output_has "bash scripts/release unrelease '1.2.3'"
+check "unrelease hands off" output_has "$ENTRY unrelease '1.2.3'"
 check "justfile stays short" [ "$(wc -l < justfile)" -lt 20 ]
 
-section "the three commands live near the top of scripts/release"
-run awk '/^test_cmd=/ { t = NR } /^bump_cmd=/ { b = NR } /^publish_cmd=/ { p = NR }
+section "the three commands live near the top of $SCRIPT"
+run awk '/^test_cmd *=/ { t = NR } /^bump_cmd *=/ { b = NR } /^publish_cmd *=/ { p = NR }
          END { print t, b, p }' "$RELEASE"
 read -r t_line b_line p_line <<< "$out"
 check "test_cmd is set" [ -n "$t_line" ]
-check "test_cmd is near the top" [ "$t_line" -lt 40 ]
+check "test_cmd is near the top" [ "$t_line" -lt 45 ]
 check "bump_cmd follows it" [ "$b_line" = "$((t_line + 1))" ]
 check "publish_cmd follows that" [ "$p_line" = "$((b_line + 1))" ]
-run grep -n 'test_cmd\|bump_cmd\|publish_cmd\|TEST_CMD' justfile
+run grep -n 'test_cmd\|bump_cmd\|publish_cmd' justfile
 check "the justfile no longer carries them" not status_is 0
 
-section "scripts/release argument handling"
+section "$SCRIPT argument handling"
 new_project args
-run bash scripts/release bogus 0.1.0
+run $ENTRY bogus 0.1.0
 check "unknown subcommand exits 2" status_is 2
-check "unknown subcommand prints usage" output_has "usage: scripts/release"
-run bash scripts/release release
+check "unknown subcommand prints usage" output_has "usage: $SCRIPT"
+run $ENTRY release
 check "missing version exits 2" status_is 2
-run bash scripts/release release 0.1.0 extra
+run $ENTRY release 0.1.0 extra
 check "extra argument exits 2" status_is 2
+
+}
+
+for impl in bash python; do
+  use_impl "$impl"
+  echo
+  echo "=== $impl: $STARTER ==="
+  changelog_tests
+  flow_tests
+done
 
 echo
 echo "$passed passed, $failed failed"

@@ -57,8 +57,30 @@ set -euo pipefail
 
 changelog="${CHANGELOG:-CHANGELOG.md}"
 
+# Errors follow one rule, so there is never a question of who handles what:
+#
+#   cl_* helpers        print to stderr and `return 1`. The caller decides.
+#   everything else     calls fail/fail_dirty, which exit. Nothing catches
+#                       them, so no caller has to think about it.
+#
+# Anything a caller would want to add context to therefore lives in a cl_*
+# helper. Anything terminal says, in its own message, how to recover.
+
 fail() { echo "error: $*" >&2; exit 1; }
 warn() { echo "warning: $*" >&2; }
+
+# Like fail, but for failures after the bump has already touched files. The
+# checks proved the tree was clean beforehand, so discarding everything is safe.
+fail_dirty() {
+  local undo="git checkout -- ."
+  if [ -n "$(git ls-files --others --exclude-standard)" ]; then
+    undo="$undo && git clean -fd"
+  fi
+  if [ -n "$(git status --porcelain)" ]; then
+    fail "$* Nothing is committed. Undo with: $undo"
+  fi
+  fail "$* Nothing changed."
+}
 
 tag_of() { echo "v$1"; }
 
@@ -104,10 +126,11 @@ cl_has_notes() {
   esac
 }
 
-# Fail unless "## Unreleased" has notes under it.
+# Returns 1 unless "## Unreleased" has notes under it.
 cl_check() {
   if [ ! -f "$changelog" ] || ! cl_has_notes Unreleased; then
-    fail "$changelog has no notes under \"## Unreleased\" — add a line describing this release, then rerun."
+    echo "$changelog has no notes under \"## Unreleased\" — add a line describing this release, then rerun." >&2
+    return 1
   fi
 }
 
@@ -115,9 +138,10 @@ cl_check() {
 # "## Unreleased" on top for next time.
 cl_rotate() {
   local version="$1" today tmp
-  cl_check
+  cl_check || return 1
   if cl_section_body "$version" > /dev/null 2>&1; then
-    fail "$changelog already has a \"## $version\" section — pick a new version."
+    echo "$changelog already has a \"## $version\" section — pick a new version." >&2
+    return 1
   fi
   today=$(date +%Y-%m-%d)
   tmp="$changelog.tmp.$$"
@@ -134,10 +158,12 @@ cl_rotate() {
 cl_notes() {
   local version="$1" body
   if [ ! -f "$changelog" ]; then
-    fail "$changelog not found."
+    echo "$changelog not found." >&2
+    return 1
   fi
   if ! body=$(cl_section_body "$version"); then
-    fail "$changelog has no \"## $version\" section."
+    echo "$changelog has no \"## $version\" section." >&2
+    return 1
   fi
   printf '%s\n' "$body" | awk '
     NF { if (!started) started = 1; for (i = 0; i < blank; i++) print ""; blank = 0; print; next }
@@ -181,7 +207,7 @@ check_releasable() {
   [ -z "$(git status --porcelain)" ] || fail "Working tree not clean — commit or stash first. git status"
 
   # 5. Changelog notes
-  cl_check
+  cl_check || exit 1
 
   # 6. Version goes up. No tags yet means this is the first release.
   last=$(git tag --list 'v*' --sort=-v:refname | awk '/^v[0-9]+\.[0-9]+\.[0-9]+$/ && !found { print substr($0, 2); found = 1 }')
@@ -234,19 +260,6 @@ cmd_release() {
   local version="$1" tag bump
   tag=$(tag_of "$version")
 
-  # For failures after the bump: the checks proved the tree was clean, so
-  # discarding every change is safe.
-  fail_dirty() {
-    local undo="git checkout -- ."
-    if [ -n "$(git ls-files --others --exclude-standard)" ]; then
-      undo="$undo && git clean -fd"
-    fi
-    if [ -n "$(git status --porcelain)" ]; then
-      fail "$* Nothing is committed. Undo with: $undo"
-    fi
-    fail "$* Nothing changed."
-  }
-
   check_releasable "$version"
 
   echo "==> Testing"
@@ -258,8 +271,7 @@ cmd_release() {
   bash -eo pipefail -c "$bump" || fail_dirty "Bump failed."
 
   echo "==> Updating $changelog"
-  # Subshell so cl_rotate's own exit doesn't skip the undo instructions.
-  (cl_rotate "$version") || fail_dirty "Changelog update failed."
+  cl_rotate "$version" || fail_dirty "Changelog update failed."
 
   echo "==> Committing and tagging $tag"
   git commit --quiet -am "Release $version" || fail_dirty "Commit failed."
@@ -271,11 +283,11 @@ cmd_release() {
     fail "Publish failed — nothing has left your machine. Undo with: just unrelease $version"
   fi
 
-  # Subshell: cmd_finish exits on failure, and that must not skip the message
-  # below — after a successful publish the only way out is forward.
-  if ! (cmd_finish "$version"); then
-    fail "Published $version but didn't finish. Fix the problem above, then run: just release-finish $version"
-  fi
+  # Say so out loud, because every failure from here on is a finish-forward
+  # one and cmd_finish's own messages all name release-finish. That's why
+  # this can just call cmd_finish and let it exit on its own.
+  echo "==> Published $version. There is no going back now, only forward."
+  cmd_finish "$version"
 }
 
 # Push and create the GitHub release for a published VERSION. Safe to rerun.
