@@ -1,4 +1,4 @@
 ---
 description: TODO
 defaultDir: .
-mainFile: justfile
+mainFile: scripts/release.py

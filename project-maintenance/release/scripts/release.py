@@ -9,15 +9,15 @@ The whole release flow. Python 3.9+, git and gh. No third-party packages.
     just unrelease 1.2.3        undo a release that never left this machine
 
 Version format: MAJOR.MINOR.PATCH, no "v" (the tag adds it).
-  breaking change -> major . new feature -> minor . fix -> patch
-  Before 1.0: breaking change -> minor.  First release: 0.1.0
+  breaking change → major · new feature → minor · fix → patch
+  Before 1.0: breaking change → minor.  First release: 0.1.0
 
 Before releasing, add notes under "## Unreleased" in CHANGELOG.md. They
 become the GitHub release notes.
 
 If something fails:
-  before publish -> just unrelease 1.2.3       (nothing left your machine)
-  after publish  -> just release-finish 1.2.3  (never roll back a published
+  before publish → just unrelease 1.2.3       (nothing left your machine)
+  after publish  → just release-finish 1.2.3  (never roll back a published
                                                 version; only go forward)
 """
 
@@ -36,7 +36,7 @@ test_cmd = "npm test"
 bump_cmd = "npm version VERSION --no-git-tag-version"
 publish_cmd = "npm publish"
 
-# Presets -- copy one set over the three above.
+# Presets — copy one set over the three above.
 #
 #   node:           test_cmd = "npm test"
 #                   bump_cmd = "npm version VERSION --no-git-tag-version"
@@ -66,10 +66,11 @@ SEMVER = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 
 
 class Fail(Exception):
-    """Every error. main() prints it and exits 1.
+    """Every error in this file. main() prints it and exits 1.
 
-    Anywhere that wants to add context to a failure -- the undo instructions
-    after a bump, say -- catches it, which is the whole of the error handling.
+    That is the whole of the error handling. Anything wanting to add context
+    to a failure — the undo instructions after a bump, say — catches it and
+    re-raises; everything else just lets it travel.
     """
 
 

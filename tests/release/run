@@ -4,41 +4,19 @@
 #
 #   tests/release/run
 #
-# Runs the entire suite against both implementations -- project-maintenance/
-# release (bash) and project-maintenance/release-python -- so the two can be
-# compared on readability alone. Any behavior difference between them shows up
-# here as a failing check.
-#
-# Lives outside the starter directories on purpose: jump-start copies a starter
-# wholesale, and these tests have no business in the projects that use it.
+# Lives outside project-maintenance/release/ on purpose: jump-start copies a
+# starter directory wholesale, and these tests have no business in the projects
+# that use the starter.
 #
 # Plain bash. Each case builds a throwaway bare "origin" and working clone
 # under mktemp -d, with the three commands set to harmless ones and a stub gh
 # on PATH, so nothing touches a real registry or GitHub. Needs git and just.
 set -euo pipefail
 
-HERE=$(cd "$(dirname "$0")" && pwd)
-
-# use_impl NAME: point the suite at one of the two starters.
-use_impl() {
-  IMPL="$1"
-  case "$IMPL" in
-    bash)
-      STARTER=$(cd "$HERE/../../project-maintenance/release" && pwd)
-      SCRIPT="scripts/release"
-      ENTRY="bash scripts/release"
-      ASSIGN="="
-      ;;
-    python)
-      STARTER=$(cd "$HERE/../../project-maintenance/release-python" && pwd)
-      SCRIPT="scripts/release.py"
-      ENTRY="python3 scripts/release.py"
-      ASSIGN=" = "
-      ;;
-    *) echo "unknown implementation: $IMPL" >&2; exit 1 ;;
-  esac
-  RELEASE="$STARTER/$SCRIPT"
-}
+STARTER=$(cd "$(dirname "$0")/../../project-maintenance/release" && pwd)
+SCRIPT="scripts/release.py"
+RELEASE="$STARTER/$SCRIPT"
+ENTRY="python3 scripts/release.py"
 
 ROOT=$(mktemp -d "${TMPDIR:-/tmp}/release-tests.XXXXXX")
 trap 'rm -rf "$ROOT"' EXIT
@@ -84,15 +62,10 @@ check() {
   fi
 }
 
-# cl FUNC [ARG...]: load the release script without running it and call FUNC.
-# For bash, $0 differs from the sourced path so the dispatcher stays put; for
-# python, __name__ is not "__main__".
+# cl FUNC [ARG...]: load release.py without running it (__name__ is not
+# "__main__") and call FUNC directly.
 cl() {
-  if [ "$IMPL" = bash ]; then
-    bash -c '. "$1"; shift; "$@"' sourced-by-tests "$RELEASE" "$@"
-  else
-    python3 "$ROOT/bin/clrun.py" "$RELEASE" "$@"
-  fi
+  python3 "$ROOT/bin/clrun.py" "$RELEASE" "$@"
 }
 
 not() { ! "$@"; }
@@ -187,7 +160,7 @@ CLRUN
 # Creates origin + working clone with the starter committed and pushed, cds
 # into the clone, and sets $W (clone), $O (bare origin), $GH_STATE.
 new_project() {
-  local dir="$ROOT/cases/$IMPL/$1"
+  local dir="$ROOT/cases/$1"
   local test_cmd="${2:-true}"
   local bump_cmd="${3:-echo VERSION > version.txt}"
   local publish_cmd="${4:-true}"
@@ -200,10 +173,10 @@ new_project() {
   # The three commands live at the top of the release script, so that's what
   # gets rewritten per case.
   mkdir -p "$W/scripts"
-  awk -v t="$test_cmd" -v b="$bump_cmd" -v p="$publish_cmd" -v a="$ASSIGN" '
-    /^test_cmd *=/    { print "test_cmd" a "\"" t "\""; next }
-    /^bump_cmd *=/    { print "bump_cmd" a "\"" b "\""; next }
-    /^publish_cmd *=/ { print "publish_cmd" a "\"" p "\""; next }
+  awk -v t="$test_cmd" -v b="$bump_cmd" -v p="$publish_cmd" '
+    /^test_cmd = /    { print "test_cmd = \"" t "\""; next }
+    /^bump_cmd = /    { print "bump_cmd = \"" b "\""; next }
+    /^publish_cmd = / { print "publish_cmd = \"" p "\""; next }
     { print }
   ' "$RELEASE" > "$W/$SCRIPT"
   chmod +x "$W/$SCRIPT"
@@ -259,11 +232,9 @@ unchanged() {
 
 # --- Changelog handling ------------------------------------------------------
 #
-# Both scripts keep their changelog functions private and dispatch only when
+# release.py keeps its changelog functions private and only dispatches when
 # executed, so each case below loads the file without running it and calls one
-# function by name. Same function names, same messages, either way.
-
-changelog_tests() {
+# function by name.
 
 cl_dir="$ROOT/changelog"
 mkdir -p "$cl_dir"
@@ -353,11 +324,7 @@ check "notes are byte-for-byte, blank lines trimmed off both ends" \
 
 unset CHANGELOG
 
-}
-
 # --- Release flow ------------------------------------------------------------
-
-flow_tests() {
 
 section "happy path: first release 0.1.0, then 0.1.1"
 new_project happy
@@ -448,8 +415,8 @@ check "says what to do" output_has "Releases run from main (you're on feature) â
 section "out of sync with origin"
 new_project sync
 add_note "Something"
-git clone --quiet "$O" "$ROOT/cases/$IMPL/sync/other"
-(cd "$ROOT/cases/$IMPL/sync/other" && echo x > other.txt && git add other.txt && git commit --quiet -m other && git push --quiet origin main 2> /dev/null)
+git clone --quiet "$O" "$ROOT/cases/sync/other"
+(cd "$ROOT/cases/sync/other" && echo x > other.txt && git add other.txt && git commit --quiet -m other && git push --quiet origin main 2> /dev/null)
 snapshot
 run just release 0.1.0
 check "behind fails" status_is 1
@@ -469,8 +436,8 @@ run just release 0.1.0
 check "local tag fails" status_is 1
 check "local tag says what to do" output_has "Tag v0.1.0 already exists locally â€” pick a new version, or git tag -d v0.1.0 if it's stale."
 git tag -d v0.1.0 > /dev/null
-git clone --quiet "$O" "$ROOT/cases/$IMPL/tags/other"
-(cd "$ROOT/cases/$IMPL/tags/other" && git tag -a v0.1.0 -m v0.1.0 && git push --quiet origin v0.1.0 2> /dev/null)
+git clone --quiet "$O" "$ROOT/cases/tags/other"
+(cd "$ROOT/cases/tags/other" && git tag -a v0.1.0 -m v0.1.0 && git push --quiet origin v0.1.0 2> /dev/null)
 snapshot
 run just release 0.1.0
 check "origin tag fails" status_is 1
@@ -639,16 +606,6 @@ run $ENTRY release
 check "missing version exits 2" status_is 2
 run $ENTRY release 0.1.0 extra
 check "extra argument exits 2" status_is 2
-
-}
-
-for impl in bash python; do
-  use_impl "$impl"
-  echo
-  echo "=== $impl: $STARTER ==="
-  changelog_tests
-  flow_tests
-done
 
 echo
 echo "$passed passed, $failed failed"
