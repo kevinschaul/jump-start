@@ -1,9 +1,0 @@
-# Release recipes. Everything — the commands to edit, the docs — is in
-# scripts/release.
-
-help:
-    @just --list
-
-# Prepare a release. TYPE is major, minor or patch; you'll be asked if you omit it.
-release type="":
-    @bash scripts/release {{ quote(type) }}
