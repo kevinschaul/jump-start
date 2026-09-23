@@ -13,6 +13,7 @@
 set -euo pipefail
 
 STARTER=$(cd "$(dirname "$0")/../../project-maintenance/release" && pwd)
+RELEASE="$STARTER/scripts/release"
 ROOT=$(mktemp -d "${TMPDIR:-/tmp}/release-tests.XXXXXX")
 trap 'rm -rf "$ROOT"' EXIT
 
@@ -138,13 +139,17 @@ new_project() {
   W="$dir/work"
   git init --quiet --bare "$O"
   git clone --quiet "$O" "$W" 2> /dev/null
-  cp -R "$STARTER/scripts" "$STARTER/CHANGELOG.md" "$W/"
+  cp "$STARTER/justfile" "$STARTER/CHANGELOG.md" "$W/"
+  # The three commands now live at the top of scripts/release, so that's what
+  # gets rewritten per case.
+  mkdir -p "$W/scripts"
   awk -v t="$test_cmd" -v b="$bump_cmd" -v p="$publish_cmd" '
-    /^test-cmd := /    { print "test-cmd := \"" t "\""; next }
-    /^bump-cmd := /    { print "bump-cmd := \"" b "\""; next }
-    /^publish-cmd := / { print "publish-cmd := \"" p "\""; next }
+    /^test_cmd=/    { print "test_cmd=\"" t "\""; next }
+    /^bump_cmd=/    { print "bump_cmd=\"" b "\""; next }
+    /^publish_cmd=/ { print "publish_cmd=\"" p "\""; next }
     { print }
-  ' "$STARTER/justfile" > "$W/justfile"
+  ' "$STARTER/scripts/release" > "$W/scripts/release"
+  chmod +x "$W/scripts/release"
   echo 0.0.0 > "$W/version.txt"
 
   export GH_STATE="$dir/gh"
@@ -195,68 +200,77 @@ unchanged() {
   check "version.txt unchanged" same_file version.txt "$ROOT/version.snap"
 }
 
-# --- scripts/changelog -------------------------------------------------------
+# --- Changelog handling ------------------------------------------------------
+#
+# The changelog functions live inside scripts/release, which dispatches only
+# when executed. Sourcing it defines the functions and nothing else, so each
+# case below runs one of them directly.
 
-CL="$STARTER/scripts/changelog"
 cl_dir="$ROOT/changelog"
 mkdir -p "$cl_dir"
 export CHANGELOG="$cl_dir/CHANGELOG.md"
 
+# cl FUNC [ARG...]: source scripts/release in a fresh shell and call FUNC.
+# $0 differs from the sourced path, so the dispatcher at the bottom stays put.
+cl() {
+  bash -c '. "$1"; shift; "$@"' sourced-by-tests "$RELEASE" "$@"
+}
+
 section "changelog check: has notes"
 printf '# Changelog\n\n## Unreleased\n\n- Added a thing\n\n## 0.1.0 - 2026-01-01\n\n- Old\n' > "$CHANGELOG"
 cp "$CHANGELOG" "$cl_dir/before"
-run bash "$CL" check
+run cl cl_check
 check "exits 0" status_is 0
 check "does not write" same_file "$CHANGELOG" "$cl_dir/before"
 
 section "changelog check: notes under a subheading"
 printf '# Changelog\n\n## Unreleased\n\n### Fixed\n\n- A bug\n' > "$CHANGELOG"
-run bash "$CL" check
+run cl cl_check
 check "exits 0" status_is 0
 
 section "changelog check: empty Unreleased"
 printf '# Changelog\n\n## Unreleased\n\n## 0.1.0 - 2026-01-01\n\n- Old\n' > "$CHANGELOG"
 cp "$CHANGELOG" "$cl_dir/before"
-run bash "$CL" check
+run cl cl_check
 check "exits 1" status_is 1
 check "says what to do" output_has 'has no notes under "## Unreleased" — add a line describing this release, then rerun.'
 check "does not write" same_file "$CHANGELOG" "$cl_dir/before"
 
 section "changelog check: empty Unreleased at end of file"
 printf '# Changelog\n\n## Unreleased\n' > "$CHANGELOG"
-run bash "$CL" check
+run cl cl_check
 check "exits 1" status_is 1
 
 section "changelog check: whitespace-only Unreleased"
 printf '# Changelog\n\n## Unreleased\n   \n\t\n\n## 0.1.0 - 2026-01-01\n\n- Old\n' > "$CHANGELOG"
-run bash "$CL" check
+run cl cl_check
 check "exits 1" status_is 1
 
 section "changelog check: missing Unreleased section"
 printf '# Changelog\n\n## 0.1.0 - 2026-01-01\n\n- Old\n' > "$CHANGELOG"
-run bash "$CL" check
+run cl cl_check
 check "exits 1" status_is 1
 check "says what to do" output_has 'add a line describing this release'
 
 section "changelog check: missing file"
 rm -f "$CHANGELOG"
-run bash "$CL" check
+run cl cl_check
 check "exits 1" status_is 1
 check "says what to do" output_has 'add a line describing this release'
 check "does not create the file" [ ! -e "$CHANGELOG" ]
 
 section "changelog rotate"
 printf '# Changelog\n\n## Unreleased\n\n- New thing\n\n## 0.1.0 - 2026-01-01\n\n- Old\n' > "$CHANGELOG"
-run bash "$CL" rotate 0.2.0
+run cl cl_rotate 0.2.0
 check "exits 0" status_is 0
 expected=$(printf '# Changelog\n\n## Unreleased\n\n## 0.2.0 - %s\n\n- New thing\n\n## 0.1.0 - 2026-01-01\n\n- Old' "$(date +%Y-%m-%d)")
 check "moves notes under the version, keeps an empty Unreleased" file_is "$CHANGELOG" "$expected"
-run bash "$CL" check
+run cl cl_check
 check "Unreleased is empty afterwards" status_is 1
 
 section "changelog rotate: refuses empty Unreleased"
 cp "$CHANGELOG" "$cl_dir/before"
-run bash "$CL" rotate 0.3.0
+run cl cl_rotate 0.3.0
 check "exits 1" status_is 1
 check "says what to do" output_has 'add a line describing this release'
 check "does not write" same_file "$CHANGELOG" "$cl_dir/before"
@@ -264,18 +278,18 @@ check "does not write" same_file "$CHANGELOG" "$cl_dir/before"
 section "changelog rotate: refuses an existing version"
 printf '# Changelog\n\n## Unreleased\n\n- New\n\n## 0.1.0 - 2026-01-01\n\n- Old\n' > "$CHANGELOG"
 cp "$CHANGELOG" "$cl_dir/before"
-run bash "$CL" rotate 0.1.0
+run cl cl_rotate 0.1.0
 check "exits 1" status_is 1
 check "does not write" same_file "$CHANGELOG" "$cl_dir/before"
 
 section "changelog notes"
 printf '# Changelog\n\n## Unreleased\n\n## 0.1.10 - 2026-02-01\n\n- Ten\n\n## 0.1.1 - 2026-01-02\n\n\n- One\n\n- Uno\n\n\n## 0.1.0 - 2026-01-01\n\n- Zero\n' > "$CHANGELOG"
-run bash "$CL" notes 0.1.1
+run cl cl_notes 0.1.1
 check "exits 0" status_is 0
 check "prints only that version, trimmed" [ "$out" = "$(printf -- '- One\n\n- Uno')" ]
-run bash "$CL" notes 0.1.0
+run cl cl_notes 0.1.0
 check "last section" [ "$out" = "- Zero" ]
-run bash "$CL" notes 0.2.0
+run cl cl_notes 0.2.0
 check "missing version exits 1" status_is 1
 
 unset CHANGELOG
@@ -516,27 +530,50 @@ else
   check "says how to install" output_has "gh not found — install it: https://cli.github.com"
 fi
 
+section "the starter is a justfile, a script and a changelog"
+run find "$STARTER" -type f -not -name jump-start.yaml
+check "exits 0" status_is 0
+check "three files" [ "$(printf '%s\n' "$out" | wc -l | tr -d ' ')" = 3 ]
+for f in justfile scripts/release CHANGELOG.md; do
+  check "ships $f" [ -f "$STARTER/$f" ]
+done
+
 section "justfile is a thin entrypoint over scripts/release"
 cd "$STARTER"
+run just --list
+check "exits 0" status_is 0
+check "offers release" output_has "release version"
+check "offers release-finish" output_has "release-finish version"
+check "offers unrelease" output_has "unrelease version"
+check "no guard recipe" not output_has "guard"
 run just --dry-run release 1.2.3
-check "exits 0" status_is 0
-check "hands off to the script" output_has "bash scripts/release release '1.2.3'"
-run just --evaluate
-check "exits 0" status_is 0
-for v in TEST_CMD BUMP_CMD PUBLISH_CMD; do
-  check "$v is exported" output_has "$v "
-done
-check "BUMP_CMD carries the VERSION placeholder" output_has '"npm version VERSION --no-git-tag-version"'
+check "release hands off" output_has "bash scripts/release release '1.2.3'"
+run just --dry-run release-finish 1.2.3
+check "release-finish hands off" output_has "bash scripts/release finish '1.2.3'"
+run just --dry-run unrelease 1.2.3
+check "unrelease hands off" output_has "bash scripts/release unrelease '1.2.3'"
+check "justfile stays short" [ "$(wc -l < justfile)" -lt 20 ]
 
-section "scripts/release without the justfile's environment"
-new_project bare-env
-run env -u TEST_CMD -u BUMP_CMD -u PUBLISH_CMD bash scripts/release release 0.1.0
-check "exits 1" status_is 1
-check "points at the justfile" output_has "TEST_CMD is not set — run this through the justfile: just release 0.1.0"
-check "didn't run the guard" not output_has "Ready to release"
+section "the three commands live near the top of scripts/release"
+run awk '/^test_cmd=/ { t = NR } /^bump_cmd=/ { b = NR } /^publish_cmd=/ { p = NR }
+         END { print t, b, p }' "$RELEASE"
+read -r t_line b_line p_line <<< "$out"
+check "test_cmd is set" [ -n "$t_line" ]
+check "test_cmd is near the top" [ "$t_line" -lt 40 ]
+check "bump_cmd follows it" [ "$b_line" = "$((t_line + 1))" ]
+check "publish_cmd follows that" [ "$p_line" = "$((b_line + 1))" ]
+run grep -n 'test_cmd\|bump_cmd\|publish_cmd\|TEST_CMD' justfile
+check "the justfile no longer carries them" not status_is 0
+
+section "scripts/release argument handling"
+new_project args
 run bash scripts/release bogus 0.1.0
 check "unknown subcommand exits 2" status_is 2
 check "unknown subcommand prints usage" output_has "usage: scripts/release"
+run bash scripts/release release
+check "missing version exits 2" status_is 2
+run bash scripts/release release 0.1.0 extra
+check "extra argument exits 2" status_is 2
 
 echo
 echo "$passed passed, $failed failed"

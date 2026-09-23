@@ -1,27 +1,61 @@
 #!/usr/bin/env bash
-# The release flow for the release starter. bash + git + gh only.
 #
-#   scripts/release guard VERSION      check that VERSION can be released
-#   scripts/release release VERSION    test, bump, tag, publish, push, release
-#   scripts/release finish VERSION     push and create the GitHub release
-#   scripts/release unrelease VERSION  undo a release that never left this machine
+# The whole release flow. bash + git + gh + awk, nothing else.
 #
-# The justfile sets TEST_CMD, BUMP_CMD and PUBLISH_CMD. VERSION in BUMP_CMD is
-# replaced with the version being released.
+#   just release 1.2.3          test, bump, changelog, commit, tag, publish,
+#                               push, create the GitHub release
+#   just release-finish 1.2.3   push and create the release for an already
+#                               published version. Safe to rerun.
+#   just unrelease 1.2.3        undo a release that never left this machine
 #
-# Decisions:
+# Version format: MAJOR.MINOR.PATCH, no "v" (the tag adds it).
+#   breaking change → major · new feature → minor · fix → patch
+#   Before 1.0: breaking change → minor.  First release: 0.1.0
+#
+# Before releasing, add notes under "## Unreleased" in CHANGELOG.md. They
+# become the GitHub release notes.
+#
+# If something fails:
+#   before publish → just unrelease 1.2.3       (nothing left your machine)
+#   after publish  → just release-finish 1.2.3  (never roll back a published
+#                                                version; only go forward)
+#
+# ---------------------------------------------------------------------------
+# EDIT THESE THREE. VERSION in bump_cmd becomes the version being released.
+# ---------------------------------------------------------------------------
+
+test_cmd="npm test"
+bump_cmd="npm version VERSION --no-git-tag-version"
+publish_cmd="npm publish"
+
+# Presets — copy one set over the three above.
+#
+#   node:           test_cmd="npm test"
+#                   bump_cmd="npm version VERSION --no-git-tag-version"
+#                   publish_cmd="npm publish"
+#
+#   python (uv):    test_cmd="uv run pytest"
+#                   bump_cmd="uv version VERSION"
+#                   publish_cmd="rm -rf dist && uv build && uv publish"
+#
+#   ships nothing:  publish_cmd="true"
+#
+# ---------------------------------------------------------------------------
+#
+# Decisions behind this flow:
 #   - Releases run from main only. No dev/main promotion.
 #   - No prereleases.
-#   - Projects that ship nothing: publish-cmd := "true"
 #   - Protected org repos: don't use this starter; release through CI.
 #   - Credentials: each ecosystem's native login (npm login; uv/PyPI token in
 #     keyring or env). Never commit tokens.
-#   - Tags are "v"-prefixed. To namespace (e.g. lib-v*), change tag_of below.
-#   - The guard and `git commit -am` depend on each other. Don't remove the
-#     clean-tree check.
+#   - Tags are "v"-prefixed. To namespace them (e.g. lib-v*), change tag_of.
+#   - Nothing is committed until every check has passed. The checks and
+#     `git commit -am` depend on each other: don't remove the clean-tree check.
+#   - Changelog file: set $CHANGELOG to use something other than CHANGELOG.md.
+
 set -euo pipefail
 
-cd "$(dirname "$0")/.."
+changelog="${CHANGELOG:-CHANGELOG.md}"
 
 fail() { echo "error: $*" >&2; exit 1; }
 warn() { echo "warning: $*" >&2; }
@@ -29,9 +63,89 @@ warn() { echo "warning: $*" >&2; }
 tag_of() { echo "v$1"; }
 
 usage() {
-  echo "usage: scripts/release guard | release | finish | unrelease VERSION" >&2
+  echo "usage: scripts/release release | finish | unrelease VERSION" >&2
   exit 2
 }
+
+# --- CHANGELOG.md ------------------------------------------------------------
+
+# Shared by every changelog function: is this line the "## NAME" heading?
+# Matches "## 1.2.3" and "## 1.2.3 - 2026-01-01", but not "## 1.2.30" or
+# "### 1.2.3".
+cl_awk_lib='
+function heading_name(line) {
+  if (line !~ /^## /) return ""
+  sub(/^## +/, "", line)
+  sub(/[ \t]+$/, "", line)
+  return line
+}
+function is_heading(line, name,   h) {
+  h = heading_name(line)
+  return h == name || index(h, name " ") == 1
+}'
+
+# Print the body of section NAME (the lines between its heading and the next
+# "## " heading). Exits 3 if the section doesn't exist.
+cl_section_body() {
+  awk -v name="$1" "$cl_awk_lib"'
+    /^## / { if (inside) exit; if (is_heading($0, name)) { inside = 1; found = 1; next } }
+    inside { print }
+    END { if (!found) exit 3 }
+  ' "$changelog"
+}
+
+# True if section NAME exists and has at least one non-blank line.
+cl_has_notes() {
+  local body
+  body=$(cl_section_body "$1") || return 1
+  case "$body" in
+    *[![:space:]]*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# Fail unless "## Unreleased" has notes under it.
+cl_check() {
+  if [ ! -f "$changelog" ] || ! cl_has_notes Unreleased; then
+    fail "$changelog has no notes under \"## Unreleased\" — add a line describing this release, then rerun."
+  fi
+}
+
+# Turn "## Unreleased" into "## VERSION - DATE", leaving an empty
+# "## Unreleased" on top for next time.
+cl_rotate() {
+  local version="$1" today tmp
+  cl_check
+  if cl_section_body "$version" > /dev/null 2>&1; then
+    fail "$changelog already has a \"## $version\" section — pick a new version."
+  fi
+  today=$(date +%Y-%m-%d)
+  tmp="$changelog.tmp.$$"
+  awk -v version="$version" -v today="$today" "$cl_awk_lib"'
+    !done && is_heading($0, "Unreleased") {
+      print "## Unreleased"; print ""; print "## " version " - " today; done = 1; next
+    }
+    { print }
+  ' "$changelog" > "$tmp"
+  mv "$tmp" "$changelog"
+}
+
+# Print the notes for VERSION, trimmed of leading and trailing blank lines.
+cl_notes() {
+  local version="$1" body
+  if [ ! -f "$changelog" ]; then
+    fail "$changelog not found."
+  fi
+  if ! body=$(cl_section_body "$version"); then
+    fail "$changelog has no \"## $version\" section."
+  fi
+  printf '%s\n' "$body" | awk '
+    NF { if (!started) started = 1; for (i = 0; i < blank; i++) print ""; blank = 0; print; next }
+    started { blank++ }
+  '
+}
+
+# --- Checks ------------------------------------------------------------------
 
 # True if $1 > $2, both MAJOR.MINOR.PATCH. Numeric, so 0.10.0 > 0.9.0.
 version_gt() {
@@ -45,8 +159,9 @@ version_gt() {
   [ "$a3" -gt "$b3" ]
 }
 
-# Check that VERSION can be released. Changes nothing.
-cmd_guard() {
+# Everything that must be true before VERSION can be released. Changes nothing,
+# so a failure here always leaves the project exactly as it was.
+check_releasable() {
   local version="$1" tag last semver branch remote_tag pr_rules protected
   tag=$(tag_of "$version")
 
@@ -66,7 +181,7 @@ cmd_guard() {
   [ -z "$(git status --porcelain)" ] || fail "Working tree not clean — commit or stash first. git status"
 
   # 5. Changelog notes
-  bash scripts/changelog check || exit 1
+  cl_check
 
   # 6. Version goes up. No tags yet means this is the first release.
   last=$(git tag --list 'v*' --sort=-v:refname | awk '/^v[0-9]+\.[0-9]+\.[0-9]+$/ && !found { print substr($0, 2); found = 1 }')
@@ -82,7 +197,7 @@ cmd_guard() {
     fail "Tag $tag already exists locally — pick a new version, or git tag -d $tag if it's stale."
   fi
 
-  # 8. In sync with origin (--no-tags: the guard doesn't create local tags)
+  # 8. In sync with origin (--no-tags: this check doesn't create local tags)
   git fetch --quiet --no-tags origin main || fail "Couldn't fetch from origin — check your network and remote, then rerun."
   [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] || fail "Not in sync with origin/main — git pull (or push your commits first)."
 
@@ -112,12 +227,14 @@ cmd_guard() {
   echo "Ready to release $version${last:+ (last release: $last)}"
 }
 
+# --- Commands ----------------------------------------------------------------
+
 # Test, bump, tag, publish, push, and create the GitHub release.
 cmd_release() {
-  local version="$1" tag bump var
+  local version="$1" tag bump
   tag=$(tag_of "$version")
 
-  # For failures after bump: the guard proved the tree was clean, so
+  # For failures after the bump: the checks proved the tree was clean, so
   # discarding every change is safe.
   fail_dirty() {
     local undo="git checkout -- ."
@@ -130,22 +247,19 @@ cmd_release() {
     fail "$* Nothing changed."
   }
 
-  for var in TEST_CMD BUMP_CMD PUBLISH_CMD; do
-    [ -n "${!var:-}" ] || fail "$var is not set — run this through the justfile: just release $version"
-  done
-
-  cmd_guard "$version"
+  check_releasable "$version"
 
   echo "==> Testing"
-  bash -eo pipefail -c "$TEST_CMD" \
+  bash -eo pipefail -c "$test_cmd" \
     || fail_dirty "Tests failed. Fix them, then rerun: just release $version"
 
   echo "==> Bumping to $version"
-  bump=${BUMP_CMD//VERSION/$version}
+  bump=${bump_cmd//VERSION/$version}
   bash -eo pipefail -c "$bump" || fail_dirty "Bump failed."
 
-  echo "==> Updating CHANGELOG.md"
-  bash scripts/changelog rotate "$version" || fail_dirty "Changelog update failed."
+  echo "==> Updating $changelog"
+  # Subshell so cl_rotate's own exit doesn't skip the undo instructions.
+  (cl_rotate "$version") || fail_dirty "Changelog update failed."
 
   echo "==> Committing and tagging $tag"
   git commit --quiet -am "Release $version" || fail_dirty "Commit failed."
@@ -153,7 +267,7 @@ cmd_release() {
 
   # Point of no return: once publish succeeds, never roll back. Finish forward.
   echo "==> Publishing"
-  if ! bash -eo pipefail -c "$PUBLISH_CMD"; then
+  if ! bash -eo pipefail -c "$publish_cmd"; then
     fail "Publish failed — nothing has left your machine. Undo with: just unrelease $version"
   fi
 
@@ -183,7 +297,7 @@ cmd_finish() {
     echo "GitHub release $tag already exists"
   else
     echo "==> Creating GitHub release $tag"
-    notes=$(bash scripts/changelog notes "$version") || fail "Couldn't read notes for $version from CHANGELOG.md."
+    notes=$(cl_notes "$version") || fail "Couldn't read notes for $version from $changelog."
     # Notes go in over stdin, so nothing depends on a tempfile surviving.
     printf '%s\n' "$notes" \
       | gh release create "$tag" --verify-tag --title "$tag" --notes-file - > /dev/null \
@@ -217,11 +331,19 @@ cmd_unrelease() {
   echo "Unreleased $version: deleted $tag and the release commit."
 }
 
-[ $# -eq 2 ] || usage
-case "$1" in
-  guard)     cmd_guard "$2" ;;
-  release)   cmd_release "$2" ;;
-  finish)    cmd_finish "$2" ;;
-  unrelease) cmd_unrelease "$2" ;;
-  *) usage ;;
-esac
+main() {
+  cd "$(dirname "${BASH_SOURCE[0]}")/.."
+  [ $# -eq 2 ] || usage
+  case "$1" in
+    release)   cmd_release "$2" ;;
+    finish)    cmd_finish "$2" ;;
+    unrelease) cmd_unrelease "$2" ;;
+    *) usage ;;
+  esac
+}
+
+# Run only when executed. Sourcing this file just defines the functions, which
+# is how tests/release/run exercises the changelog handling.
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  main "$@"
+fi
