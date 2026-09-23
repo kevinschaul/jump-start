@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+# Keep-a-changelog helper for the release starter. bash + awk only.
+#
+#   scripts/changelog check            exit 1 unless "## Unreleased" has notes
+#   scripts/changelog rotate VERSION   turn "## Unreleased" into "## VERSION - DATE"
+#   scripts/changelog notes VERSION    print the notes for VERSION
+#
+# Set CHANGELOG to use a file other than CHANGELOG.md.
+set -euo pipefail
+
+file="${CHANGELOG:-CHANGELOG.md}"
+
+# Shared by every mode: is this line the "## NAME" heading? Matches
+# "## 1.2.3" and "## 1.2.3 - 2026-01-01", but not "## 1.2.30" or "### 1.2.3".
+awk_lib='
+function heading_name(line) {
+  if (line !~ /^## /) return ""
+  sub(/^## +/, "", line)
+  sub(/[ \t]+$/, "", line)
+  return line
+}
+function is_heading(line, name,   h) {
+  h = heading_name(line)
+  return h == name || index(h, name " ") == 1
+}'
+
+usage() {
+  echo "usage: scripts/changelog check | rotate VERSION | notes VERSION" >&2
+  exit 2
+}
+
+require_file() {
+  if [ ! -f "$file" ]; then
+    echo "$file not found — create it with a \"## Unreleased\" section, then rerun." >&2
+    exit 1
+  fi
+}
+
+# Print the body of section NAME (the lines between its heading and the next
+# "## " heading). Exits 3 if the section doesn't exist.
+section_body() {
+  awk -v name="$1" "$awk_lib"'
+    /^## / { if (inside) exit; if (is_heading($0, name)) { inside = 1; found = 1; next } }
+    inside { print }
+    END { if (!found) exit 3 }
+  ' "$file"
+}
+
+# True if section NAME exists and has at least one non-blank line.
+has_notes() {
+  local body
+  body=$(section_body "$1") || return 1
+  case "$body" in
+    *[![:space:]]*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+require_unreleased_notes() {
+  if [ ! -f "$file" ] || ! has_notes Unreleased; then
+    echo "$file has no notes under \"## Unreleased\" — add a line describing this release, then rerun." >&2
+    exit 1
+  fi
+}
+
+cmd_check() {
+  require_unreleased_notes
+}
+
+cmd_rotate() {
+  local version="$1" today tmp
+  require_unreleased_notes
+  if section_body "$version" > /dev/null 2>&1; then
+    echo "$file already has a \"## $version\" section — pick a new version." >&2
+    exit 1
+  fi
+  today=$(date +%Y-%m-%d)
+  tmp="$file.tmp.$$"
+  # Keep an empty "## Unreleased" on top for the next release.
+  awk -v version="$version" -v today="$today" "$awk_lib"'
+    !done && is_heading($0, "Unreleased") {
+      print "## Unreleased"; print ""; print "## " version " - " today; done = 1; next
+    }
+    { print }
+  ' "$file" > "$tmp"
+  mv "$tmp" "$file"
+}
+
+cmd_notes() {
+  local version="$1" body
+  require_file
+  if ! body=$(section_body "$version"); then
+    echo "$file has no \"## $version\" section." >&2
+    exit 1
+  fi
+  # Trim leading and trailing blank lines.
+  printf '%s\n' "$body" | awk '
+    NF { if (!started) started = 1; for (i = 0; i < blank; i++) print ""; blank = 0; print; next }
+    started { blank++ }
+  '
+}
+
+[ $# -ge 1 ] || usage
+case "$1" in
+  check)  [ $# -eq 1 ] || usage; cmd_check ;;
+  rotate) [ $# -eq 2 ] || usage; cmd_rotate "$2" ;;
+  notes)  [ $# -eq 2 ] || usage; cmd_notes "$2" ;;
+  *) usage ;;
+esac
