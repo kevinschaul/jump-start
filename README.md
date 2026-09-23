@@ -45,7 +45,6 @@ jump-start find react
 
 Jump to group:
 - [geo](#geo)
-- [make](#make)
 - [node](#node)
 - [project-maintenance](#project-maintenance)
 - [project-structure](#project-structure)
@@ -81,17 +80,6 @@ jump-start use @kevinschaul/geo/pmtiles-counties
 ```
 
 A demo Makefile for creating map tiles at the county level
-
----
-### make
-
-make/**makefile-task-runner**
-
-```
-jump-start use @kevinschaul/make/makefile-task-runner
-```
-
-Makefile starter with a self-documenting "make help" command
 
 ---
 ### node
@@ -208,27 +196,6 @@ jump-start use @kevinschaul/python/project
 ```
 
 A basic python project, using uv
-
----
-python/**pytest-evals-helpers**
-
-```
-jump-start use @kevinschaul/python/pytest-evals-helpers
-```
-
-Given a bag of eval_results, generate metrics per prompt template, print
-them out and optionally save them to a file.
-
-For use with [pytest-evals](https://github.com/AlmogBaku/pytest-evals)
-
-```
-===== Metrics by Prompt Template =====
-Template ID  Sample Size  Accuracy   Precision  Recall     F1        
------------------------------------------------------------------
-Template 1   200          84.00%     81.48%     88.00%     84.62%    
-Template 2   200          83.50%     79.13%     91.00%     84.65%    
-Template 3   200          81.00%     86.90%     73.00%     79.35%    
-```
 
 ---
 python/**script**
